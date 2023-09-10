@@ -1,7 +1,7 @@
-/* classe che definisce gli oggetti fridgeEvent. Instaura una connessione con il
+/* Classe che definisce gli oggetti fridgeEvent. Instaura una connessione con il
 server node e, tramite il package socket.io-client, si mette in ascolto di eventi
 che riguardano l'aggiornamento del database contenente i prodotti nella dispensa
-condivisi con altri utenti. */
+condivisi con altri utenti. Sfrutta il pattern Singleton. */
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:async';
@@ -20,7 +20,7 @@ class FridgeEvent {
   }
 
   FridgeEvent._internal() {
-    this._ipaddress = "localhost";
+    this._ipaddress = "10.0.2.2";
     this._port = "3000";
     this._fridgeID = "prova";
     this._url = "http://" + this._ipaddress + ":" + this._port;
