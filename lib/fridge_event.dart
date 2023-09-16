@@ -20,9 +20,9 @@ class FridgeEvent {
   }
 
   FridgeEvent._internal() {
-    this._ipaddress = "10.0.2.2";
+    this._ipaddress = "localhost";
     this._port = "3000";
-    this._fridgeID = "prova";
+    this._fridgeID = "";
     this._url = "http://" + this._ipaddress + ":" + this._port;
     this.socket = IO.io(this._url, <String, dynamic>{
       'transports': ['websocket'],
@@ -34,10 +34,10 @@ class FridgeEvent {
   mettersi in ascolto di eventi che riguardano l'aggiornamento del database
    */
   Future<void> communicate() async {
-    this.socket = IO.io(this._url, <String, dynamic>{
+    /* this.socket = IO.io(this._url, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
-    });
+    }); */
 
     await socket.connect();
 
@@ -63,6 +63,10 @@ class FridgeEvent {
 
   }
 
+  void setFridgeID(String ID) {
+    this._fridgeID = ID;
+  }
+
   // invia un messaggio di update al server node
   void sendUpdate() {
     print("sending update");
@@ -71,6 +75,8 @@ class FridgeEvent {
 
   // interrompe la comunicazione con il server node
   void stopCommunication() {
-    this.socket.disconnect();
+    if(this.socket.connected) {
+      this.socket.disconnect();
+    }
   }
 }

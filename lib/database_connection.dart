@@ -1,20 +1,6 @@
 import 'package:dart_mysql/dart_mysql.dart' as dart_mysql;
 import 'dart:async';
 
-Future main() async {
-  DatabaseConnection db = DatabaseConnection();
-   await db.connect();
-  var results = await db.connection.query('select * from ProvaTheFridge.Utente');
-  if (results.isEmpty) {
-    print('No results');
-  } else {
-    for (var row in results) {
-      print(row);
-    }
-  }
-  db.close();
-}
-
 class DatabaseConnection {
 
   String hostname = 'localhost';
@@ -48,11 +34,24 @@ class DatabaseConnection {
   }
 
   Future<List> query(String sql) async {
-    return await this.connection.query(sql);
+    var final_result = await this.connection.query(sql);
+    List final_result_list = [];
+    for (var row in final_result) {
+      final_result_list.add(row);
+    }
+    return final_result_list;
   }
 
   Future<void> close() async {
     await this.connection.close();
+  }
+
+  static String querySetupper(var data, String query) {
+    String query_updated = query;
+    for (var element in data) {
+      query_updated = query_updated.replaceFirst(RegExp('\\?'), element);
+    }
+    return query_updated;
   }
 
 }
