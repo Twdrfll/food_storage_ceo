@@ -5,13 +5,15 @@ condivisi con altri utenti. Sfrutta il pattern Singleton. */
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:async';
+import 'fridge_state.dart' as fs;
 
 class FridgeEvent {
-  String _fridgeID = ""; // ID del frigo, da definire altrove
+  String _fridgeID = "";
   String _ipaddress = "";
   String _port = "";
   String _url = "";
   late IO.Socket socket;
+  bool _update = false;
 
   static final FridgeEvent _instance = FridgeEvent._internal();
 
@@ -55,12 +57,10 @@ class FridgeEvent {
       print("Disconnected");
     });
 
-    socket.on("fridgeEvent", (data) {
-      print(data);
-      /* qui va inserita la funzione che aggiorna i dati locali prendendoli dal
-      database remoto */
-    });
+  }
 
+ bool getUpdate() {
+    return this._update;
   }
 
   void setFridgeID(String ID) {
