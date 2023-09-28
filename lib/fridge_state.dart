@@ -34,6 +34,36 @@ import 'users.dart' as users;
   }
 } */
 
+/* void main() async {
+  users.User new_user = users.User();
+  new_user.setEmail("prova@gmail.com");
+  new_user.setPassword("pluto");
+  await new_user.login();
+  await new_user.signup();
+  LocalShoppingCart local_shopping_cart = LocalShoppingCart();
+  await local_shopping_cart.setupShoppingCart();
+  await local_shopping_cart.populateLocalShoppingCart();
+  print("Elementi nel dizionario: ");
+  for (var element in local_shopping_cart.localDictionary.dictionary_elements) {
+    print(element.name + " " + element.barcode + " " + element.days_to_expiration + " " + element.id);
+  }
+  print("Elementi nel carrello: ");
+  for (var element in local_shopping_cart.shopping_cart_elements) {
+    print(element.name + " " + element.barcode + " " + element.days_to_expiration + " " + element.quantity.toString() + " " + element.color);
+  }
+  LocalShoppingCartElement different_quantity_element = LocalShoppingCartElement.id(local_shopping_cart.shopping_cart_elements[0].id, local_shopping_cart.shopping_cart_elements[0].name, local_shopping_cart.shopping_cart_elements[0].barcode, local_shopping_cart.shopping_cart_elements[0].days_to_expiration, 2, local_shopping_cart.shopping_cart_elements[0].color);
+  await local_shopping_cart.addElement(different_quantity_element);
+  print("Elementi nel carrello: ");
+  for (var element in local_shopping_cart.shopping_cart_elements) {
+    print(element.name + " " + element.barcode + " " + element.days_to_expiration + " " + element.quantity.toString() + " " + element.color);
+  }
+  await local_shopping_cart.removeElement(local_shopping_cart.shopping_cart_elements[2]);
+  print("Elementi nel carrello: ");
+  for (var element in local_shopping_cart.shopping_cart_elements) {
+    print(element.name + " " + element.barcode + " " + element.days_to_expiration + " " + element.quantity.toString() + " " + element.color);
+  }
+} */
+
 class LocalFridge {
 
   String query_retrieve_fridge_elements = """(SELECT Prodotto.id,
@@ -94,7 +124,7 @@ class LocalFridge {
     await this.localDictionary.setupConnection();
     await this.localDictionary.populate_local_dictionary();
     await this.populateLocalFridge();
-    this.localDictionary.registerFridgeEvent();
+    this.registerFridgeEvent();
   }
 
   void registerFridgeEvent() {
@@ -274,6 +304,177 @@ class LocalFridge {
 
   Future<void> alter_element_quantity(LocalFridgeElement element, int new_quantity) async {
     var data = [new_quantity.toString(), element.id, this.user.id, element.expiration_date];
+    String modify_element_quantity = DatabaseConnection.querySetupper(data, this.query_modify_element_quantity);
+    try {
+      await this.db.query(modify_element_quantity);
+      this.user.fridgeEvent.sendUpdate();
+    } catch (e) {
+      print("Error modifying element quantity: " + e.toString());
+    }
+    element.alterQuantity(new_quantity);
+  }
+
+}
+
+class LocalShoppingCart {
+  String retrieve_shopping_cart_elements = """(SELECT Prodotto.id,
+  Prodotto.nome,
+  Prodotto.barcode,
+  Prodotto.giorniValidità,
+  ListaSpesa.quantità,
+  Utente.colore
+  FROM ListaSpesa
+  LEFT JOIN Prodotto ON Prodotto.id = ListaSpesa.idProdotto
+  LEFT JOIN Utente ON Utente.id = ListaSpesa.idUtente
+  WHERE Utente.idDispensa = ?
+  AND EXISTS (
+    SELECT 1
+    FROM ListaSpesa AS L
+    WHERE L.idUtente = Utente.id
+  ))
+  UNION
+  (SELECT Prodotto.id,
+  Prodotto.nome,
+  Prodotto.barcode,
+  Prodotto.giorniValidità,
+  ListaSpesa.quantità,
+  Utente.colore
+  FROM ListaSpesa
+  RIGHT JOIN Prodotto ON Prodotto.id = ListaSpesa.idProdotto
+  RIGHT JOIN Utente ON Utente.id = ListaSpesa.idUtente
+  WHERE Utente.idDispensa = ?
+  AND EXISTS (
+    SELECT 1
+    FROM ListaSpesa AS L
+    WHERE L.idUtente = Utente.id
+  ))
+  """;
+  String query_insert_element = "INSERT INTO ListaSpesa (idProdotto, idUtente, quantità) VALUES (?, ?, ?);";
+  String query_remove_element = "DELETE FROM ListaSpesa WHERE idProdotto = ? AND idUtente = ? AND quantità = ?;";
+  String query_modify_element_quantity = "UPDATE ListaSpesa SET quantità = ? WHERE idProdotto = ? AND idUtente = ?;";
+
+  users.User user = users.User();
+  String fridge_ID = "";
+  LocalDictionary localDictionary = new LocalDictionary();
+  List<LocalShoppingCartElement> shopping_cart_elements = [];
+  DatabaseConnection db = DatabaseConnection();
+
+  static final LocalShoppingCart _instance = LocalShoppingCart._internal();
+
+  LocalShoppingCart._internal() {
+    this.fridge_ID = this.user.fridgeID;
+  }
+
+  factory LocalShoppingCart() {
+    return _instance;
+  }
+
+  void registerFridgeEvent() {
+    this.user.fridgeEvent.socket.on("fridgeEvent", (data) {
+      this.populateLocalShoppingCart();
+    });
+  }
+
+  Future<void> setupShoppingCart() async {
+    await this.db.connect();
+    await this.localDictionary.setupConnection();
+    await this.localDictionary.populate_local_dictionary();
+    await this.populateLocalShoppingCart();
+    this.registerFridgeEvent();
+  }
+
+  bool checkIfElementDataIsInDictionary(LocalShoppingCartElement element) {
+    for (var dictionary_element in this.localDictionary.dictionary_elements) {
+      if (dictionary_element.name == element.name && dictionary_element.barcode == element.barcode && dictionary_element.days_to_expiration == element.days_to_expiration) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool checkIfElementDataIsInShoppingCart(LocalShoppingCartElement element) {
+    for (var shopping_cart_element in this.shopping_cart_elements) {
+      if (shopping_cart_element.name == element.name && shopping_cart_element.barcode == element.barcode && shopping_cart_element.days_to_expiration == element.days_to_expiration) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String returnIdOfExistingLocalDictionaryElement(LocalShoppingCartElement element) {
+    for (var dictionary_element in this.localDictionary.dictionary_elements) {
+      if (dictionary_element.name == element.name && dictionary_element.barcode == element.barcode && dictionary_element.days_to_expiration == element.days_to_expiration) {
+        return dictionary_element.id;
+      }
+    }
+    return "null";
+  }
+
+  Future<void> addElement(LocalShoppingCartElement element) async {
+    if (this.checkIfElementDataIsInDictionary(element)) {
+      if (this.checkIfElementDataIsInShoppingCart(element)) {
+        for (var shopping_cart_element in this.shopping_cart_elements) {
+          if (shopping_cart_element.name == element.name && shopping_cart_element.barcode == element.barcode && shopping_cart_element.days_to_expiration == element.days_to_expiration) {
+            await this.alter_element_quantity(shopping_cart_element, shopping_cart_element.quantity + element.quantity);
+          }
+        }
+      } else {
+        this.shopping_cart_elements.add(element);
+        String new_element_id = this.returnIdOfExistingLocalDictionaryElement(element);
+        var data = [new_element_id, this.user.id, element.quantity.toString()];
+        String insert_element = DatabaseConnection.querySetupper(data, this.query_insert_element);
+        try {
+          await this.db.query(insert_element);
+          this.user.fridgeEvent.sendUpdate();
+        } catch (e) {
+          print("Error inserting element: " + e.toString());
+        }
+      }
+    } else {
+      LocalDictionaryElement new_element = LocalDictionaryElement(element.name, element.barcode, element.days_to_expiration);
+      await this.localDictionary.addElement(new_element);
+      this.addElement(element);
+    }
+  }
+
+  Future<void> removeElement(LocalShoppingCartElement element) async {
+    var data = [element.id, this.user.id, element.quantity.toString()];
+    String remove_element = DatabaseConnection.querySetupper(data, this.query_remove_element);
+    try {
+      await this.db.query(remove_element);
+      this.user.fridgeEvent.sendUpdate();
+    } catch (e) {
+      print("Error removing element: " + e.toString());
+    }
+  this.shopping_cart_elements.remove(element);
+  }
+
+  Future<void> populateLocalShoppingCart() async {
+    this.shopping_cart_elements = [];
+    var data = [this.fridge_ID, this.fridge_ID];
+    String retrieve_elements = DatabaseConnection.querySetupper(data, this.retrieve_shopping_cart_elements);
+    var results = await this.db.query(retrieve_elements);
+    for (var element in results) {
+      LocalShoppingCartElement new_element_to_add = LocalShoppingCartElement.id(element[0].toString(),
+          element[1].toString(),
+          element[2].toString(),
+          element[3].toString(),
+          element[4],
+          element[5].toString());
+      this.shopping_cart_elements.add(new_element_to_add);
+    }
+  }
+
+  void reorder_elements_alphabetically_a_to_z() {
+    this.shopping_cart_elements.sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  void reorder_elements_alphabetically_z_to_a() {
+    this.shopping_cart_elements.sort((a, b) => b.name.compareTo(a.name));
+  }
+
+  Future<void> alter_element_quantity(LocalShoppingCartElement element, int new_quantity) async {
+    var data = [new_quantity.toString(), element.id, this.user.id];
     String modify_element_quantity = DatabaseConnection.querySetupper(data, this.query_modify_element_quantity);
     try {
       await this.db.query(modify_element_quantity);
@@ -512,6 +713,31 @@ class LocalFridgeElement extends LocalDictionaryElement {
 
   void alterExpirationDate(String new_expiration_date) {
     this.expiration_date = new_expiration_date;
+  }
+
+  void alterColor(String new_color) {
+    this.color = new_color;
+  }
+
+}
+
+class LocalShoppingCartElement extends LocalDictionaryElement {
+
+  int quantity = 0;
+  String color = "";
+
+  LocalShoppingCartElement(String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_color) : super(new_name, new_barcode, new_days_to_expiration) {
+    this.quantity = new_quantity;
+    this.color = new_color;
+  }
+
+  LocalShoppingCartElement.id(String new_id, String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_color) : super.id(new_id, new_name, new_barcode, new_days_to_expiration) {
+    this.quantity = new_quantity;
+    this.color = new_color;
+  }
+
+  void alterQuantity(int new_quantity) {
+    this.quantity = new_quantity;
   }
 
   void alterColor(String new_color) {
