@@ -22,7 +22,7 @@ class FridgeEvent {
   }
 
   FridgeEvent._internal() {
-    this._ipaddress = "localhost";
+    this._ipaddress = "10.0.2.2";
     this._port = "3000";
     this._fridgeID = "";
     this._url = "http://" + this._ipaddress + ":" + this._port;

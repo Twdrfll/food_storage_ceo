@@ -1,23 +1,128 @@
 import 'package:flutter/material.dart';
+import 'user_settings.dart';
+import '../fridge_state.dart';
 
-class loginAndSignup extends StatefulWidget {
-  const loginAndSignup({super.key});
+class LoginAndSignup extends StatefulWidget {
+  const LoginAndSignup({super.key});
 
-  _loginAndSignupState createState() => _loginAndSignupState();
+  _LoginAndSignupState createState() => _LoginAndSignupState();
+
 }
 
-class _loginAndSignupState extends State<loginAndSignup> {
+class _LoginAndSignupState extends State<LoginAndSignup> {
+
+  late LocalFridge local_fridge;
+  late LocalDictionary local_dictionary;
+  late LocalShoppingCart local_shopping_cart;
   bool button_value = false;
   bool agreement_value = false;
   bool password_visibility = false;
   bool confirm_password_visibility = false;
-  Color button_color_enabled = Color(0xFF01689D);
-  Color button_color_disabled = Color(0xFFC4C4C4);
-  Color text_secondary_color = Color(0xFFAEA7A7);
-  Color input_field_background = Color(0xFFF7F8F8);
+
+  final emailInputController = TextEditingController();
+  final passwordInputController = TextEditingController();
+  final confirmPasswordInputController = TextEditingController();
+
+  void initState() {
+    super.initState();
+    local_fridge = LocalFridge();
+    local_dictionary = LocalDictionary();
+    local_shopping_cart = LocalShoppingCart();
+    _initializeUserData();
+  }
+
+  Future<void> _initializeUserData() async {
+    await local_fridge.user.retrieveSavedData();
+    print(local_fridge.user.email);
+    print(local_fridge.user.password);
+    if (_checkLocalDataPresence()) {
+      await _login_no_textfields();
+    }
+  }
+
+  bool _isSignup() {
+    return button_value;
+  }
+
+  bool _checkLocalDataPresence() {
+    return local_fridge.user.email.isNotEmpty && local_fridge.user.password.isNotEmpty;
+  }
+
+  Future<void> _login_no_textfields() async {
+    if (await local_fridge.user.login()) {
+      Navigator.pushReplacementNamed(context, '/user_settings');
+    } else {
+      _showError(context);
+    }
+  }
+
+  Future<void> _login() async {
+    local_fridge.user.setEmail(emailInputController.text);
+    local_fridge.user.setPassword(passwordInputController.text);
+    if (await local_fridge.user.login()) {
+      await local_fridge.user.saveLocalData();
+      Navigator.pushReplacementNamed(context, '/user_settings');
+    } else {
+      _showError(context);
+    }
+  }
+
+  Future<void> _signup() async {
+    if (passwordInputController.text ==
+        confirmPasswordInputController.text) {
+      local_fridge.user.setEmail(emailInputController.text);
+      local_fridge.user.setPassword(passwordInputController.text);
+      if (await local_fridge.user.signup()) {
+        await local_fridge.createFridgeAndDictionary();
+        await local_fridge.user.saveLocalData();
+        Navigator.pushReplacementNamed(context, '/user_settings');
+      } else {
+        _showError(context);
+      }
+    } else {
+      _showError(context);
+    }
+  }
+
+  void _showError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Errore durante il login/signup.'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  void _showCompletionError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Devi accettare i termini e le condizioni.'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  OutlineInputBorder _noInputBorder(BuildContext context) {
+    return OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+        borderSide:
+            BorderSide(color: Theme.of(context).colorScheme.secondaryContainer)
+    );
+  }
+
+  OutlineInputBorder _primaryColorInputBorder(BuildContext context) {
+    return OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+        borderSide:
+        BorderSide(color: Theme.of(context).colorScheme.primary)
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
@@ -28,29 +133,23 @@ class _loginAndSignupState extends State<loginAndSignup> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(
+                Center(
                   // Welcome
                   child: Padding(
                     padding: const EdgeInsets.only(top: 150.0),
                     child: Text(
                       'Benvenut*!',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.normal,
-                      ),
+                      style: theme.textTheme.titleMedium,
                     ),
                   ),
                 ),
-                const Center(
+                Center(
                   // Title
                   child: Padding(
                     padding: const EdgeInsets.only(top: 10.0),
                     child: Text(
                       'Entra in The Fridge',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: theme.textTheme.titleLarge,
                     ),
                   ),
                 ),
@@ -66,8 +165,8 @@ class _loginAndSignupState extends State<loginAndSignup> {
                           style: ButtonStyle(
                             backgroundColor: MaterialStateProperty.all<Color>(
                                 button_value
-                                    ? button_color_enabled
-                                    : button_color_disabled),
+                                    ? theme.colorScheme.tertiary
+                                    : theme.colorScheme.tertiaryContainer),
                             minimumSize: MaterialStateProperty.all<Size>(
                                 Size(120.0, 46.0)),
                             shape: MaterialStateProperty.all<
@@ -94,9 +193,7 @@ class _loginAndSignupState extends State<loginAndSignup> {
                                       children: [
                                         Text(
                                           'Sign Up',
-                                          style: TextStyle(
-                                            fontSize: 18.0,
-                                          ),
+                                          style: theme.textTheme.labelLarge,
                                         ),
                                       ],
                                     ),
@@ -110,9 +207,7 @@ class _loginAndSignupState extends State<loginAndSignup> {
                                         ),
                                         Text(
                                           'Sign Up',
-                                          style: TextStyle(
-                                            fontSize: 18.0,
-                                          ),
+                                          style: theme.textTheme.labelLarge,
                                         ),
                                       ],
                                     ),
@@ -133,8 +228,8 @@ class _loginAndSignupState extends State<loginAndSignup> {
                           style: ButtonStyle(
                             backgroundColor: MaterialStateProperty.all<Color>(
                                 button_value
-                                    ? button_color_disabled
-                                    : button_color_enabled),
+                                    ? theme.colorScheme.tertiaryContainer
+                                    : theme.colorScheme.tertiary),
                             minimumSize: MaterialStateProperty.all<Size>(
                                 Size(120.0, 46.0)),
                             shape: MaterialStateProperty.all<
@@ -161,9 +256,7 @@ class _loginAndSignupState extends State<loginAndSignup> {
                                       children: [
                                         Text(
                                           'Log In',
-                                          style: TextStyle(
-                                            fontSize: 18.0,
-                                          ),
+                                          style: theme.textTheme.labelLarge,
                                         ),
                                       ],
                                     ),
@@ -177,9 +270,7 @@ class _loginAndSignupState extends State<loginAndSignup> {
                                         ),
                                         Text(
                                           'Log In',
-                                          style: TextStyle(
-                                            fontSize: 18.0,
-                                          ),
+                                          style: theme.textTheme.labelLarge,
                                         ),
                                       ],
                                     ),
@@ -206,31 +297,20 @@ class _loginAndSignupState extends State<loginAndSignup> {
                         padding: const EdgeInsets.only(
                             top: 10.0, left: 20.0, right: 20.0),
                         child: TextField(
+                          controller: emailInputController,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Color(0xFFf7f8f8),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                borderSide:
-                                    BorderSide(color: input_field_background)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                borderSide:
-                                    BorderSide(color: input_field_background)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                borderSide:
-                                    BorderSide(color: input_field_background)),
+                            border: _noInputBorder(context),
+                            enabledBorder: _noInputBorder(context),
+                            focusedBorder: _primaryColorInputBorder(context),
                             labelText: 'Email',
-                            labelStyle: TextStyle(
-                              color: Colors.grey,
-                            ),
                             prefixIcon: Icon(Icons.email_outlined),
                             prefixIconColor: MaterialStateColor.resolveWith(
                                 (states) =>
                                     states.contains(MaterialState.focused)
-                                        ? button_color_enabled
-                                        : Colors.grey),
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.secondary),
                           ),
                         ),
                       ),
@@ -239,32 +319,21 @@ class _loginAndSignupState extends State<loginAndSignup> {
                         padding:
                             EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
                         child: TextField(
+                          controller: passwordInputController,
                           obscureText: !password_visibility,
                           decoration: InputDecoration(
                               filled: true,
                               fillColor: Color(0xFFf7f8f8),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  borderSide: BorderSide(
-                                      color: input_field_background)),
-                              enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  borderSide: BorderSide(
-                                      color: input_field_background)),
-                              focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  borderSide: BorderSide(
-                                      color: input_field_background)),
+                              border: _noInputBorder(context),
+                              enabledBorder: _noInputBorder(context),
+                              focusedBorder: _primaryColorInputBorder(context),
                               labelText: 'Password',
-                              labelStyle: TextStyle(
-                                color: Colors.grey,
-                              ),
                               prefixIcon: Icon(Icons.lock_outline),
                               prefixIconColor: MaterialStateColor.resolveWith(
                                   (states) =>
                                       states.contains(MaterialState.focused)
-                                          ? button_color_enabled
-                                          : Colors.grey),
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.secondary),
                               suffixIcon: IconButton(
                                   icon: Icon(password_visibility
                                       ? Icons.visibility_outlined
@@ -278,8 +347,8 @@ class _loginAndSignupState extends State<loginAndSignup> {
                               suffixIconColor: MaterialStateColor.resolveWith(
                                   (states) =>
                                       states.contains(MaterialState.focused)
-                                          ? button_color_enabled
-                                          : Colors.grey)),
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.secondary)),
                         ),
                       ),
                       Padding(
@@ -292,35 +361,21 @@ class _loginAndSignupState extends State<loginAndSignup> {
                           child: Column(
                             children: [
                               TextField(
+                                controller: confirmPasswordInputController,
                                 obscureText: !confirm_password_visibility,
                                 decoration: InputDecoration(
                                     filled: true,
                                     fillColor: Color(0xFFf7f8f8),
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
-                                        borderSide: BorderSide(
-                                            color: input_field_background)),
-                                    enabledBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
-                                        borderSide: BorderSide(
-                                            color: input_field_background)),
-                                    focusedBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
-                                        borderSide: BorderSide(
-                                            color: input_field_background)),
+                                    border: _noInputBorder(context),
+                                    enabledBorder: _noInputBorder(context),
+                                    focusedBorder: _primaryColorInputBorder(context),
                                     labelText: 'Conferma password',
-                                    labelStyle: TextStyle(
-                                      color: Colors.grey,
-                                    ),
                                     prefixIcon: Icon(Icons.lock_outline),
                                     prefixIconColor:
                                         MaterialStateColor.resolveWith((states) =>
                                             states.contains(MaterialState.focused)
-                                                ? button_color_enabled
-                                                : Colors.grey),
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.secondary),
                                     suffixIcon: IconButton(
                                         icon: Icon(confirm_password_visibility
                                             ? Icons.visibility_outlined
@@ -334,15 +389,15 @@ class _loginAndSignupState extends State<loginAndSignup> {
                                     suffixIconColor:
                                         MaterialStateColor.resolveWith((states) =>
                                             states.contains(MaterialState.focused)
-                                                ? button_color_enabled
-                                                : Colors.grey)),
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.secondary)),
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(top: 12.0),
                                 child: Row(
                                   children: [
                                     Checkbox(
-                                      activeColor: button_color_enabled,
+                                      activeColor: theme.colorScheme.primary,
                                       value: agreement_value,
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
@@ -361,7 +416,7 @@ class _loginAndSignupState extends State<loginAndSignup> {
                                       child: Text(
                                         'Continuando, accetti la nostra Politica sulla Privacy e i nostri Termini d\'uso.',
                                         style: TextStyle(
-                                          color: text_secondary_color,
+                                          color: theme.colorScheme.secondary,
                                         ),
                                       ),
                                     ),
@@ -383,14 +438,24 @@ class _loginAndSignupState extends State<loginAndSignup> {
             child: ElevatedButton(
               style: ButtonStyle(
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(button_color_enabled),
+                    MaterialStateProperty.all<Color>(theme.colorScheme.primary),
                 minimumSize: MaterialStateProperty.all<Size>(Size(350.0, 72.0)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(Radius.circular(36.0))),
                 ),
               ),
-              onPressed: () {},
+              onPressed: () async {
+                if (_isSignup()) {
+                  if (agreement_value) {
+                    await _signup();
+                  } else {
+                    _showCompletionError(context);
+                  }
+                } else {
+                  await _login();
+                }
+              },
               child: Text(
                 'Avanti',
                 style: TextStyle(

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:math';
-// import 'package:shared_preferences/shared_preferences.dart'; TOGLIERE COMMENTI QUANDO SI SVILUPPERà IN ANDROID
+import 'package:shared_preferences/shared_preferences.dart';
 import 'database_connection.dart';
 import 'fridge_event.dart' as fridge_event;
 
@@ -56,8 +56,7 @@ class User {
     this.fridgeID = fridgeID;
   }
 
-  /* TOGLIERE I COMMENTI QUANDO SI SVILUPPERà IN ANDROID
-  void retrieveSavedData() async {
+  Future<void> retrieveSavedData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     this.email = prefs.getString("email") ?? "";
     this.password = prefs.getString("password") ?? "";
@@ -65,7 +64,7 @@ class User {
     this.fridgeID = prefs.getString("fridgeID") ?? "";
   }
 
-  void saveLocalData() async {
+  Future<void> saveLocalData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("email", this.email);
     prefs.setString("password", this.password);
@@ -73,13 +72,13 @@ class User {
     prefs.setString("fridgeID", this.fridgeID);
   }
 
-  void removeLocalData() async {
+  Future<void> removeLocalData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove("email");
     prefs.remove("password");
     prefs.remove("color");
     prefs.remove("fridgeID");
-  } */
+  }
 
   Future<bool> login() async {
     var data = [this.email, this.password];

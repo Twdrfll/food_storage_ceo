@@ -3,7 +3,7 @@ import 'dart:async';
 
 class DatabaseConnection {
 
-  String hostname = 'localhost';
+  String hostname = '10.0.2.2';
   int port = 8889;
   String user = 'root';
   String password = 'root';
