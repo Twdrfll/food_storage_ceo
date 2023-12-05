@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:food_storage_ceo/screen/color_picker.dart';
 import '../fridge_state.dart';
 import 'package:provider/provider.dart';
-import 'package:sliver_tools/sliver_tools.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class Settings extends StatelessWidget {

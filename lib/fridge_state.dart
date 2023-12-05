@@ -236,8 +236,9 @@ class LocalFridge {
           }
         }
       } else {
-        this.fridge_elements.add(element);
         String new_element_id = this.returnIdOfExistingLocalDictionaryElement(element);
+        element.id = new_element_id;
+        this.fridge_elements.add(element);
         var data = [new_element_id, element.user_id.toString(), element.quantity.toString(), element.expiration_date];
         String insert_element = DatabaseConnection.querySetupper(data, this.query_insert_element);
         print(insert_element);
@@ -523,13 +524,13 @@ class LocalDictionary {
   RIGHT JOIN Dispensa ON Dispensa.idDizionario = Prodotto.idDizionario
   RIGHT JOIN Dizionario ON Dizionario.id = Prodotto.idDizionario
   WHERE Dispensa.id = ?);""";
-  String query_insert_element = "INSERT INTO Prodotto (nome, barcode, giorniValidità, idDizionario) VALUES (\"?\", ?, ?, ?);";
-  String query_remove_element = "DELETE FROM Prodotto WHERE nome = \"?\" AND barcode = ? AND giorniValidità = ? AND idDizionario = ?;";
+  String query_insert_element = "INSERT INTO Prodotto (nome, barcode, giorniValidità, idDizionario) VALUES (\"?\", \"?\", ?, ?);";
+  String query_remove_element = "DELETE FROM Prodotto WHERE nome = \"?\" AND barcode = \"?\" AND giorniValidità = ? AND idDizionario = ?;";
   String query_get_dictionary_id = "SELECT idDizionario FROM Dispensa WHERE id = ?;";
-  String query_modify_element_name = "UPDATE Prodotto SET nome = \"?\" WHERE nome = \"?\" AND barcode = ? AND giorniValidità = ? AND idDizionario = ?;";
-  String query_modify_element_barcode = "UPDATE Prodotto SET barcode = ? WHERE nome = \"?\" AND barcode = ? AND giorniValidità = ? AND idDizionario = ?;";
-  String query_alter_expiration_days = "UPDATE Prodotto SET giorniValidità = ? WHERE nome = \"?\" AND barcode = ? AND giorniValidità = ? AND idDizionario = ?;";
-  String query_retrieve_product_id = "SELECT id FROM Prodotto WHERE nome = \"?\" AND barcode = ? AND giorniValidità = ? AND idDizionario = ?;";
+  String query_modify_element_name = "UPDATE Prodotto SET nome = \"?\" WHERE nome = \"?\" AND barcode = \"?\" AND giorniValidità = ? AND idDizionario = ?;";
+  String query_modify_element_barcode = "UPDATE Prodotto SET barcode = ? WHERE nome = \"?\" AND barcode = \"?\" AND giorniValidità = ? AND idDizionario = ?;";
+  String query_alter_expiration_days = "UPDATE Prodotto SET giorniValidità = ? WHERE nome = \"?\" AND barcode = \"?\" AND giorniValidità = ? AND idDizionario = ?;";
+  String query_retrieve_product_id = "SELECT id FROM Prodotto WHERE nome = \"?\" AND barcode = \"?\" AND giorniValidità = ? AND idDizionario = ?;";
 
   users.User user = users.User();
   String fridge_ID = "";
@@ -566,6 +567,8 @@ class LocalDictionary {
     } catch (e) {
       print("Error inserting element: " + e.toString());
     }
+    final assigned_id = await this.retrieveLocalDictionaryElementId(new_element);
+    new_element.id = assigned_id;
     this.dictionary_elements.add(new_element);
   }
 

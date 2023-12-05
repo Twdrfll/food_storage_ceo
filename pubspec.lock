@@ -73,6 +73,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.1"
+  fast_barcode_scanner:
+    dependency: "direct main"
+    description:
+      name: fast_barcode_scanner
+      sha256: "1a1ae580984d7edd05542c0d47c19973b2fe30e29f197c1fdf1142cb07be6f7b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.4"
+  fast_barcode_scanner_platform_interface:
+    dependency: transitive
+    description:
+      name: fast_barcode_scanner_platform_interface
+      sha256: "723931932633fe9a6bd41997d73703606bdce44e4a45d13e69680d8981ec2901"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   ffi:
     dependency: transitive
     description:
@@ -373,14 +389,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
-  sliver_tools:
-    dependency: "direct main"
-    description:
-      name: sliver_tools
-      sha256: eae28220badfb9d0559207badcbbc9ad5331aac829a88cb0964d330d2a4636a6
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.12"
   socket_io_client:
     dependency: "direct main"
     description:

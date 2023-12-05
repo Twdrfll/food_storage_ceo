@@ -6,6 +6,8 @@ import 'config/app_theme.dart';
 import 'screen/color_picker.dart';
 import 'screen/sort.dart';
 import 'fridge_state.dart';
+import 'screen/add_element.dart';
+import 'screen/scan_barcode.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -14,6 +16,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (context) => ColorPickerModel(), child: MyApp()),
           ChangeNotifierProvider(create: (context) => SortModel(), child: MyApp()),
+          ChangeNotifierProvider(create: (context) => AddElementModel(), child: MyApp()),
         ],
         child: MyApp(),
     )
@@ -35,6 +38,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => Home(),
         '/login': (context) => LoginAndSignup(),
+        '/add_element': (context) => AddElement(),
+        '/scan_barcode': (context) => ScanBarcode(),
       },
     );
   }

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import './list_item.dart';
 import './sort.dart';
 import './calendar.dart';
+import './add_element.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -349,17 +350,8 @@ class _HomeState extends State<Home> {
                             },
                           );
                         } else if (_selected_index == 0) {
-                          showModalBottomSheet(
-                            backgroundColor: theme.colorScheme.primary,
-                            isScrollControlled: true,
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Container(
-                                height: MediaQuery.of(context).size.height * 0.7,
-                                child: FridgeCalendar(localFridgeElements: local_fridge.fridge_elements,),
-                              );
-                            },
-                          );
+                          // spingi la schermata AddElement usando la route
+                          Navigator.pushNamed(context, '/add_element');
                         }
                       },
                       style: ButtonStyle(
