@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'user_settings.dart';
+import 'home.dart';
 import '../fridge_state.dart';
 
 class LoginAndSignup extends StatefulWidget {
@@ -23,6 +23,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
   final passwordInputController = TextEditingController();
   final confirmPasswordInputController = TextEditingController();
 
+  @override
   void initState() {
     super.initState();
     local_fridge = LocalFridge();
@@ -33,10 +34,12 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
 
   Future<void> _initializeUserData() async {
     await local_fridge.user.retrieveSavedData();
-    print(local_fridge.user.email);
-    print(local_fridge.user.password);
     if (_checkLocalDataPresence()) {
       await _login_no_textfields();
+      local_fridge.dispose();
+      print(local_fridge.user.email);
+      print(local_fridge.user.password);
+      local_fridge.fridge_ID = local_fridge.user.fridgeID;
     }
   }
 
@@ -50,7 +53,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
 
   Future<void> _login_no_textfields() async {
     if (await local_fridge.user.login()) {
-      Navigator.pushReplacementNamed(context, '/user_settings');
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
       _showError(context);
     }
@@ -61,7 +64,9 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
     local_fridge.user.setPassword(passwordInputController.text);
     if (await local_fridge.user.login()) {
       await local_fridge.user.saveLocalData();
-      Navigator.pushReplacementNamed(context, '/user_settings');
+      local_fridge.fridge_ID = local_fridge.user.fridgeID;
+      print('lunghezza in login ' + local_fridge.fridge_elements.length.toString());
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
       _showError(context);
     }
@@ -75,7 +80,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
       if (await local_fridge.user.signup()) {
         await local_fridge.createFridgeAndDictionary();
         await local_fridge.user.saveLocalData();
-        Navigator.pushReplacementNamed(context, '/user_settings');
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
         _showError(context);
       }
@@ -165,7 +170,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
                           style: ButtonStyle(
                             backgroundColor: MaterialStateProperty.all<Color>(
                                 button_value
-                                    ? theme.colorScheme.tertiary
+                                    ? theme.colorScheme.primary
                                     : theme.colorScheme.tertiaryContainer),
                             minimumSize: MaterialStateProperty.all<Size>(
                                 Size(120.0, 46.0)),
@@ -203,7 +208,9 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(right: 8.0),
-                                          child: Icon(Icons.check),
+                                          child: Icon(Icons.check,
+                                          color: Colors.white
+                                          ),
                                         ),
                                         Text(
                                           'Sign Up',
@@ -229,7 +236,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
                             backgroundColor: MaterialStateProperty.all<Color>(
                                 button_value
                                     ? theme.colorScheme.tertiaryContainer
-                                    : theme.colorScheme.tertiary),
+                                    : theme.colorScheme.primary),
                             minimumSize: MaterialStateProperty.all<Size>(
                                 Size(120.0, 46.0)),
                             shape: MaterialStateProperty.all<
@@ -266,7 +273,9 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(right: 8.0),
-                                          child: Icon(Icons.check),
+                                          child: Icon(Icons.check,
+                                              color: Colors.white
+                                          ),
                                         ),
                                         Text(
                                           'Log In',
@@ -459,6 +468,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
               child: Text(
                 'Avanti',
                 style: TextStyle(
+                  color: Colors.white,
                   fontSize: 18.0,
                   fontWeight: FontWeight.bold,
                 ),

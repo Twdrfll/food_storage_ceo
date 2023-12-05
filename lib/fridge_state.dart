@@ -72,7 +72,8 @@ class LocalFridge {
   Prodotto.giorniValidità,
   ProdottoDispensa.quantità,
   ProdottoDispensa.dataScadenza,
-  Utente.colore
+  Utente.colore,
+  Utente.id
   FROM ProdottoDispensa
   LEFT JOIN Utente ON Utente.id = ProdottoDispensa.idUtente
   LEFT JOIN Prodotto ON Prodotto.id = ProdottoDispensa.idProdotto
@@ -84,7 +85,8 @@ class LocalFridge {
   Prodotto.giorniValidità,
   ProdottoDispensa.quantità,
   ProdottoDispensa.dataScadenza,
-  Utente.colore
+  Utente.colore,
+  Utente.id
   FROM ProdottoDispensa
   RIGHT JOIN Utente ON Utente.id = ProdottoDispensa.idUtente
   RIGHT JOIN Prodotto ON Prodotto.id = ProdottoDispensa.idProdotto
@@ -120,6 +122,7 @@ class LocalFridge {
   }
 
   Future<void> setupFridge() async {
+    this.fridge_elements.clear();
     await this.db.connect();
     await this.localDictionary.setupConnection();
     await this.localDictionary.populate_local_dictionary();
@@ -131,6 +134,10 @@ class LocalFridge {
     this.user.fridgeEvent.socket.on("fridgeEvent", (data) {
       this.populateLocalFridge();
     });
+  }
+
+  void dispose() {
+    this.fridge_elements.clear();
   }
 
   Future<void> createFridgeAndDictionary() async {
@@ -231,8 +238,9 @@ class LocalFridge {
       } else {
         this.fridge_elements.add(element);
         String new_element_id = this.returnIdOfExistingLocalDictionaryElement(element);
-        var data = [new_element_id, this.user.id, element.quantity.toString(), element.expiration_date];
+        var data = [new_element_id, element.user_id.toString(), element.quantity.toString(), element.expiration_date];
         String insert_element = DatabaseConnection.querySetupper(data, this.query_insert_element);
+        print(insert_element);
         try {
           await this.db.query(insert_element);
           this.user.fridgeEvent.sendUpdate();
@@ -248,8 +256,10 @@ class LocalFridge {
   }
 
   Future<void> removeElement(LocalFridgeElement element) async {
-    var data = [element.id, this.user.id, element.quantity.toString(), element.expiration_date];
+    var data = [element.id, element.user_id.toString(), element.quantity.toString(), element.expiration_date];
+    print(data);
     String remove_element = DatabaseConnection.querySetupper(data, this.query_remove_element);
+    print(remove_element);
     try {
       await this.db.query(remove_element);
       this.user.fridgeEvent.sendUpdate();
@@ -261,7 +271,12 @@ class LocalFridge {
 
   Future<void> setProductAsOpen(LocalFridgeElement element) async {
     await this.alter_element_quantity(element, element.quantity - 1);
-    LocalFridgeElement new_element = LocalFridgeElement(element.name, element.barcode, element.days_to_expiration, 1, DateTime.now().toString().substring(0, 10), element.color);
+    if (element.quantity == 0) {
+      await this.removeElement(element);
+    }
+    // la nuova data di scadenza è oggi più i days_to_expiration del prodotto
+    String new_exp_date = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day + int.parse(element.days_to_expiration)).toString().substring(0, 10);
+    LocalFridgeElement new_element = LocalFridgeElement.id(element.id, element.name, element.barcode, element.days_to_expiration, 1, new_exp_date, element.color, element.user_id.toString());
     await this.addElement(new_element);
   }
 
@@ -277,7 +292,8 @@ class LocalFridge {
           element[3].toString(),
           element[4],
           element[5].toString().substring(0, 10),
-          element[6].toString());
+          element[6].toString(),
+          element[7].toString());
       this.fridge_elements.add(new_element_to_add);
     }
   }
@@ -303,8 +319,9 @@ class LocalFridge {
   }
 
   Future<void> alter_element_quantity(LocalFridgeElement element, int new_quantity) async {
-    var data = [new_quantity.toString(), element.id, this.user.id, element.expiration_date];
+    var data = [new_quantity.toString(), element.id, element.user_id.toString(), element.expiration_date];
     String modify_element_quantity = DatabaseConnection.querySetupper(data, this.query_modify_element_quantity);
+    print(modify_element_quantity);
     try {
       await this.db.query(modify_element_quantity);
       this.user.fridgeEvent.sendUpdate();
@@ -531,9 +548,11 @@ class LocalDictionary {
   }
 
   Future<void> setupConnection() async {
+    this.fridge_ID = this.user.fridgeID;
     await this.db.connect();
     var data = [this.fridge_ID];
     String get_dictionary_id = DatabaseConnection.querySetupper(data, this.query_get_dictionary_id);
+    print(get_dictionary_id);
     var raw_dictionary_ID = await this.db.query(get_dictionary_id);
     this.dictionary_ID = raw_dictionary_ID[0][0].toString();
   }
@@ -694,17 +713,20 @@ class LocalFridgeElement extends LocalDictionaryElement {
   int quantity = 0;
   String expiration_date = "";
   String color = "";
+  int user_id = 0;
 
-  LocalFridgeElement(String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_expiration_date, String new_color) : super(new_name, new_barcode, new_days_to_expiration) {
+  LocalFridgeElement(String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_expiration_date, String new_color, int new_user_id) : super(new_name, new_barcode, new_days_to_expiration) {
     this.quantity = new_quantity;
     this.expiration_date = new_expiration_date;
     this.color = new_color;
+    this.user_id = new_user_id;
   }
 
-  LocalFridgeElement.id(String new_id, String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_expiration_date, String new_color) : super.id(new_id, new_name, new_barcode, new_days_to_expiration) {
+  LocalFridgeElement.id(String new_id, String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_expiration_date, String new_color, String new_user_id) : super.id(new_id, new_name, new_barcode, new_days_to_expiration) {
     this.quantity = new_quantity;
     this.expiration_date = new_expiration_date;
     this.color = new_color;
+    this.user_id = int.parse(new_user_id);
   }
 
   void alterQuantity(int new_quantity) {

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:food_storage_ceo/fridge_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_connection.dart';
 import 'fridge_event.dart' as fridge_event;
@@ -192,7 +193,22 @@ class User {
       print("Error while changing user fridge: the new fridge probably doesn't exist. Aborting...");
       return false;
     }
-}
+  }
+
+  Future<bool> updateUserColor(String newColor) async {
+    try {
+      DatabaseConnection db = DatabaseConnection();
+      await db.connect();
+      String query = DatabaseConnection.querySetupper([newColor, this.email], query_update_color);
+      await db.query(query);
+      await db.close();
+      this.setColor(newColor);
+      return true;
+    } catch (e) {
+      print("Error while updating user color: " + e.toString());
+      return false;
+    }
+  }
 
   static String generateRandomColorHex() {
     final Random random = Random();

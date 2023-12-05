@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 ThemeData mainTheme = ThemeData(
+  useMaterial3: true,
   colorScheme: ColorScheme.fromSwatch().copyWith(
     primary: Color(0xFF01689D),
     secondary: Color(0xFFAEA7A7),
     secondaryContainer: Color(0xFFF7F8F8),
-    tertiary: Color(0xFF01689D),
+    tertiary: Color(0xFFf2f7fa),
     tertiaryContainer: Color(0xFFC4C4C4),
     error: Color(0xFF822020),
   ),
@@ -51,5 +52,21 @@ ThemeData mainTheme = ThemeData(
       color: Colors.white,
     ),
   ),
-
+  navigationBarTheme: NavigationBarThemeData(
+    elevation: 1.0,
+    backgroundColor: Colors.white,
+    // esurfaceTintColor: Colors.white,
+    indicatorColor: Colors.white,
+    labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>(
+          (Set<MaterialState> states) {
+        return TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: states.contains(MaterialState.selected)
+              ? Color(0xFF01689D)
+              : Color(0xFFAEA7A7),
+        );
+      },
+    ),
+  ),
 );
