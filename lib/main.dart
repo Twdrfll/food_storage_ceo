@@ -8,6 +8,7 @@ import 'screen/sort.dart';
 import 'fridge_state.dart';
 import 'screen/add_element.dart';
 import 'screen/scan_barcode.dart';
+import 'screen/dictionary_list.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -17,6 +18,7 @@ void main() {
           ChangeNotifierProvider(create: (context) => ColorPickerModel(), child: MyApp()),
           ChangeNotifierProvider(create: (context) => SortModel(), child: MyApp()),
           ChangeNotifierProvider(create: (context) => AddElementModel(), child: MyApp()),
+          ChangeNotifierProvider(create: (context) => DictionaryItemsModel(), child: MyApp()),
         ],
         child: MyApp(),
     )
