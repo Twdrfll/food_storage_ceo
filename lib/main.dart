@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_storage_ceo/screen/app_settings.dart';
 import 'package:food_storage_ceo/screen/sort.dart';
 import 'screen/login_signup.dart';
 import 'screen/home.dart';
@@ -9,6 +10,7 @@ import 'fridge_state.dart';
 import 'screen/add_element.dart';
 import 'screen/scan_barcode.dart';
 import 'screen/dictionary_list.dart';
+import './fridge_event.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -19,6 +21,8 @@ void main() {
           ChangeNotifierProvider(create: (context) => SortModel(), child: MyApp()),
           ChangeNotifierProvider(create: (context) => AddElementModel(), child: MyApp()),
           ChangeNotifierProvider(create: (context) => DictionaryItemsModel(), child: MyApp()),
+          ChangeNotifierProvider(create: (context) => AddNewElementToShoppingListModel(), child: MyApp()),
+          ChangeNotifierProvider(create: (context) => TriggerUpdateModel(), child: MyApp()),
         ],
         child: MyApp(),
     )
@@ -30,20 +34,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    LocalFridge().dispose();
-    // LocalFridge().setupFridge();
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      home: LoginAndSignup(),
-      theme: mainTheme,
-      routes: {
-        '/home': (context) => Home(),
-        '/login': (context) => LoginAndSignup(),
-        '/add_element': (context) => AddElement(),
-        '/scan_barcode': (context) => ScanBarcode(),
-      },
+    return Consumer<TriggerUpdateModel>(
+        builder: (context, triggerUpdateModel, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Flutter Demo',
+            home: LoginAndSignup(),
+            theme: mainTheme,
+            routes: {
+              '/home': (context) => Home(),
+              '/login': (context) => LoginAndSignup(),
+              '/add_element': (context) => AddElement(),
+              '/scan_barcode': (context) => ScanBarcode(),
+            },
+          );
+        }
     );
   }
-
 }

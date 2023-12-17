@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:food_storage_ceo/fridge_event.dart';
+import 'package:food_storage_ceo/screen/shopping_cart.dart';
 import '../fridge_state.dart';
 import './color_picker.dart';
 import '../screen/app_settings.dart';
@@ -8,6 +10,7 @@ import './sort.dart';
 import './calendar.dart';
 import './dictionary_list.dart';
 import './shopping_cart_dialog.dart';
+import './shopping_cart.dart';
 import './add_element.dart';
 
 class Home extends StatefulWidget {
@@ -26,18 +29,39 @@ class _HomeState extends State<Home> {
   late LocalFridge local_fridge;
   late LocalDictionary local_dictionary;
   late LocalShoppingCart local_shopping_cart;
-  var userColor;
+  var userColor = "";
 
   void initState() {
     super.initState();
     local_fridge = LocalFridge();
     local_dictionary = LocalDictionary();
     local_shopping_cart = LocalShoppingCart();
-    userColor = local_fridge.user.color;
+    local_fridge.context = context;
+    local_fridge.user.fridgeEvent.context = context;
     if (!_actual_sort_order_fridge_init) {
       _actual_sort_order_fridge = 0;
       _actual_sort_order_fridge_init = true;
     }
+  }
+
+  Widget addOrRemoveIconForShoppingCart() {
+    return Consumer<AddNewElementToShoppingListModel>(
+      builder: (context, addNewElementToShoppingListModel, child) {
+        if (addNewElementToShoppingListModel.selected) {
+          return Icon(
+            Icons.remove,
+            color: Colors.white,
+            size: 30.0,
+          );
+        } else {
+          return Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 30.0,
+          );
+        }
+      },
+    );
   }
 
   Widget removeAllFromShoppingCartButton(BuildContext context) {
@@ -148,6 +172,8 @@ class _HomeState extends State<Home> {
                   return ColorPickerScreen(userColor: userColor,);
                 },
               );
+            } else if (_selected_index == 1) {
+              Provider.of<AddNewElementToShoppingListModel>(context, listen: false).changeSelected();
             } else if (_selected_index == 2) {
               showModalBottomSheet(
                 backgroundColor: theme.colorScheme.primary,
@@ -157,7 +183,7 @@ class _HomeState extends State<Home> {
                   return Container(
                     height: MediaQuery.of(context).size.height * 0.8,
                     width: MediaQuery.of(context).size.width,
-                    child: ShoppingCartRecap(),
+                    child: ShoppingCartRecap(local_fridge: local_fridge,),
                   );
                 },
               );
@@ -192,11 +218,7 @@ class _HomeState extends State<Home> {
         color: Colors.white,
         size: 30,
       ),
-      Icon(
-        Icons.add,
-        color: Colors.white,
-        size: 30,
-      ),
+      addOrRemoveIconForShoppingCart(),
       Icon(
         Icons.shopping_basket_outlined,
         color: Colors.white,
@@ -220,263 +242,277 @@ class _HomeState extends State<Home> {
 
     ThemeData theme = Theme.of(context);
 
-    return Consumer<ColorPickerModel>(
-      builder: (context, colorPickerModel, child) {
 
-        List<Color> _differentColors = [
-          Color(0xFFE6AF2F),
-          Color(0xFFE6AF2F),
-          Color(0xFFE6AF2F),
-          hexToColor(colorPickerModel.userColor),
-        ];
-        List<AppBar> _differentAppBar = [
-          AppBar(
-            toolbarHeight: 80.0,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        backgroundColor: theme.colorScheme.primary,
-                        isScrollControlled: true,
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Container(
-                              height: MediaQuery.of(context).size.height * 0.7,
-                              child: FridgeCalendar(localFridgeElements: local_fridge.fridge_elements,),
+        return Consumer<ColorPickerModel>(
+            builder: (context, colorPickerModel, child) {
+
+              userColor = local_fridge.user.color;
+
+              List<Color> _differentColors = [
+                Color(0xFFE6AF2F),
+                Color(0xFFE6AF2F),
+                Color(0xFFE6AF2F),
+                hexToColor(userColor),
+              ];
+              List<AppBar> _differentAppBar = [
+                AppBar(
+                  toolbarHeight: 80.0,
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                          onPressed: () {
+                            showModalBottomSheet(
+                              backgroundColor: theme.colorScheme.primary,
+                              isScrollControlled: true,
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Container(
+                                  height: MediaQuery.of(context).size.height * 0.7,
+                                  child: FridgeCalendar(localFridgeElements: local_fridge.fridge_elements,),
+                                );
+                              },
                             );
                           },
-                      );
-                    },
-                    child: Icon(
-                      Icons.calendar_month_outlined,
-                      color: Colors.black,
-                      size: 30.0,
-                    ),
-                    style: ButtonStyle(
-                      elevation: MaterialStateProperty.all<double>(0.0),
-                      backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                      shape: MaterialStateProperty.all<CircleBorder>(CircleBorder(
-                        side: BorderSide(
-                          color: Colors.white,
-                        ),
-                      )),
-                      minimumSize: MaterialStateProperty.all<Size>(Size(60, 60)),
-                    )
-                ),
-                Text('Il mio frigo',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                ElevatedButton(
-                    onPressed: () {
-                      print('Sort');
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Sort(
-                          pageIndex: _selected_index,
-                          localFridge: local_fridge,
-                            changeSortOrder: (newSortOrder) {
-                              setState(() {
-                                _actual_sort_order_fridge = newSortOrder;
-                              });
-                            },
-                            actualSortOrder: _actual_sort_order_fridge,
-                          );
-                        },
-                      );
-                    },
-                    child: Icon(
-                      Icons.filter_list_outlined,
-                      color: Colors.black,
-                      size: 30.0,
-                    ),
-                    style: ButtonStyle(
-                      elevation: MaterialStateProperty.all<double>(0.0),
-                      backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                      shape: MaterialStateProperty.all<CircleBorder>(CircleBorder(
-                        side: BorderSide(
-                          color: Colors.white,
-                        ),
-                      )),
-                      minimumSize: MaterialStateProperty.all<Size>(Size(60, 60)),
-                    )
-                ),
-              ],
-            ),
-            backgroundColor: Colors.white,
-            elevation: 0.0,
-            centerTitle: true,
-          ),
-          AppBar(
-            toolbarHeight: 80.0,
-            title: Text('Carrello della spesa',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            backgroundColor: Colors.white,
-            elevation: 0.0,
-            centerTitle: true,
-          ),
-          AppBar(
-            toolbarHeight: 80.0,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                removeAllFromShoppingCartButton(context),
-                Text('Dizionario',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                ElevatedButton(
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.filter_list_outlined,
-                      color: Colors.black,
-                      size: 30.0,
-                    ),
-                    style: ButtonStyle(
-                      elevation: MaterialStateProperty.all<double>(0.0),
-                      backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                      shape: MaterialStateProperty.all<CircleBorder>(CircleBorder(
-                        side: BorderSide(
-                          color: Colors.white,
-                        ),
-                      )),
-                      minimumSize: MaterialStateProperty.all<Size>(Size(60, 60)),
-                    )
-                ),
-              ],
-            ),
-            backgroundColor: Colors.white,
-            elevation: 0.0,
-            centerTitle: true,
-          ),
-          AppBar(
-            toolbarHeight: 80.0,
-            title: Text('Profilo',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            backgroundColor: hexToColor(colorPickerModel.userColor),
-            elevation: 0.0,
-            centerTitle: true,
-          ),
-        ];
-        return Scaffold(
-          extendBody: true,
-          appBar: _differentAppBar[_selected_index],
-          body: IndexedStack(
-            index: _selected_index,
-            children: [
-              Center(
-                child: FridgeItems(
-                  local_fridge: local_fridge,
-                ),
-              ),
-              Center(
-                  child: Text('Schermata 2')
-              ),
-              Center(
-                  child: DictionaryItems(
-                    local_fridge: local_fridge,
-                  )
-              ),
-              Center(
-                  child: Settings(
-                    local_fridge: local_fridge,
-                    local_dictionary: local_dictionary,
-                    local_shopping_cart: local_shopping_cart,)
-              ),
-            ],
-          ),
-          bottomNavigationBar: Container(
-            height: 120,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        // Colore dell'ombra
-                        spreadRadius: 2,
-                        // Estensione dell'ombra
-                        blurRadius: 15,
-                        // Sfocatura dell'ombra
-                        offset: Offset(0,
-                            -3), // Offset dell'ombra (positivo verso il basso)
+                          child: Icon(
+                            Icons.calendar_month_outlined,
+                            color: Colors.black,
+                            size: 30.0,
+                          ),
+                          style: ButtonStyle(
+                            elevation: MaterialStateProperty.all<double>(0.0),
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                            shape: MaterialStateProperty.all<CircleBorder>(CircleBorder(
+                              side: BorderSide(
+                                color: Colors.white,
+                              ),
+                            )),
+                            minimumSize: MaterialStateProperty.all<Size>(Size(60, 60)),
+                          )
+                      ),
+                      Text('Il mio frigo',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            print('Sort');
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Sort(
+                                  pageIndex: _selected_index,
+                                  localFridge: local_fridge,
+                                  changeSortOrder: (newSortOrder) {
+                                    setState(() {
+                                      _actual_sort_order_fridge = newSortOrder;
+                                    });
+                                  },
+                                  actualSortOrder: _actual_sort_order_fridge,
+                                );
+                              },
+                            );
+                          },
+                          child: Icon(
+                            Icons.filter_list_outlined,
+                            color: Colors.black,
+                            size: 30.0,
+                          ),
+                          style: ButtonStyle(
+                            elevation: MaterialStateProperty.all<double>(0.0),
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                            shape: MaterialStateProperty.all<CircleBorder>(CircleBorder(
+                              side: BorderSide(
+                                color: Colors.white,
+                              ),
+                            )),
+                            minimumSize: MaterialStateProperty.all<Size>(Size(60, 60)),
+                          )
                       ),
                     ],
                   ),
-                  child: NavigationBar(
-                    labelBehavior: NavigationDestinationLabelBehavior
-                        .onlyShowSelected,
-                    selectedIndex: _selected_index,
-                    destinations: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 25.0, right: 25.0),
-                        child: NavigationDestination( // dispensa
-                          selectedIcon: Icon(
-                            Icons.home_filled,
-                            color: theme.colorScheme.primary,),
-                          icon: Icon(
-                            Icons.home_outlined,
-                            color: theme.colorScheme.secondary,),
-                          label: '•',
-                        ),
+                  backgroundColor: Colors.white,
+                  elevation: 0.0,
+                  centerTitle: true,
+                ),
+                AppBar(
+                  toolbarHeight: 80.0,
+                  title: Text('Carrello della spesa',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  backgroundColor: Colors.white,
+                  elevation: 0.0,
+                  centerTitle: true,
+                ),
+                AppBar(
+                  toolbarHeight: 80.0,
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      removeAllFromShoppingCartButton(context),
+                      Text('Dizionario',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 50.0),
-                        child: NavigationDestination( // spesa
-                          selectedIcon: Icon(
-                            Icons.shopping_cart,
-                            color: theme.colorScheme.primary,),
-                          icon: Icon(
-                            Icons.shopping_cart_outlined,
-                            color: theme.colorScheme.secondary,),
-                          label: '•',
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 50.0),
-                        child: NavigationDestination( // dizionario
-                          selectedIcon: Icon(
-                              Icons.menu_book,
-                              color: theme.colorScheme.primary),
-                          icon: Icon(
-                              Icons.menu_book_outlined,
-                              color: theme.colorScheme.secondary),
-                          // la label è un punto
-                          label: '•',
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 25.0, right: 25.0),
-                        child: NavigationDestination( // profilo
-                          selectedIcon: Icon(
-                            Icons.person,
-                            color: theme.colorScheme.primary,),
-                          icon: Icon(
-                              Icons.person_outlined,
-                              color: theme.colorScheme.secondary),
-                          label: '•',
-                        ),
+                      ElevatedButton(
+                          onPressed: () {},
+                          child: Icon(
+                            Icons.filter_list_outlined,
+                            color: Colors.black,
+                            size: 30.0,
+                          ),
+                          style: ButtonStyle(
+                            elevation: MaterialStateProperty.all<double>(0.0),
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                            shape: MaterialStateProperty.all<CircleBorder>(CircleBorder(
+                              side: BorderSide(
+                                color: Colors.white,
+                              ),
+                            )),
+                            minimumSize: MaterialStateProperty.all<Size>(Size(60, 60)),
+                          )
                       ),
                     ],
-                    onDestinationSelected: (index) {
-                      setState(() {
-                        _selected_index = index;
-                      });
-                    },
+                  ),
+                  backgroundColor: Colors.white,
+                  elevation: 0.0,
+                  centerTitle: true,
+                ),
+                AppBar(
+                  toolbarHeight: 80.0,
+                  title: Text('Profilo',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  backgroundColor: hexToColor(userColor),
+                  elevation: 0.0,
+                  centerTitle: true,
+                ),
+              ];
+              return Scaffold(
+                backgroundColor: Colors.white,
+                extendBody: true,
+                appBar: _differentAppBar[_selected_index],
+                body: IndexedStack(
+                  index: _selected_index,
+                  children: [
+                    Center(
+                      child: FridgeItems(
+                        local_fridge: local_fridge,
+                      ),
+                    ),
+                    Center(
+                      child: ShoppingCartWindow(local_fridge: local_fridge,),
+                    ),
+                    Center(
+                        child: DictionaryItems(
+                          local_fridge: local_fridge,
+                        )
+                    ),
+                    Center(
+                        child: Settings(
+                          local_fridge: local_fridge,
+                          local_dictionary: local_dictionary,
+                          local_shopping_cart: local_shopping_cart,)
+                    ),
+                  ],
+                ),
+                bottomNavigationBar: Container(
+                  height: 120,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              // Colore dell'ombra
+                              spreadRadius: 2,
+                              // Estensione dell'ombra
+                              blurRadius: 15,
+                              // Sfocatura dell'ombra
+                              offset: Offset(0,
+                                  -3), // Offset dell'ombra (positivo verso il basso)
+                            ),
+                          ],
+                        ),
+                        child: NavigationBar(
+                          surfaceTintColor: Colors.white,
+                          labelBehavior: NavigationDestinationLabelBehavior
+                              .onlyShowSelected,
+                          selectedIndex: _selected_index,
+                          destinations: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+                              child: NavigationDestination( // dispensa
+                                selectedIcon: Icon(
+                                  Icons.home_filled,
+                                  color: theme.colorScheme.primary,),
+                                icon: Icon(
+                                  Icons.home_outlined,
+                                  color: theme.colorScheme.secondary,),
+                                label: '•',
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 50.0),
+                              child: NavigationDestination( // spesa
+                                selectedIcon: Icon(
+                                  Icons.shopping_cart,
+                                  color: theme.colorScheme.primary,),
+                                icon: Icon(
+                                  Icons.shopping_cart_outlined,
+                                  color: theme.colorScheme.secondary,),
+                                label: '•',
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 50.0),
+                              child: NavigationDestination( // dizionario
+                                selectedIcon: Icon(
+                                    Icons.menu_book,
+                                    color: theme.colorScheme.primary),
+                                icon: Icon(
+                                    Icons.menu_book_outlined,
+                                    color: theme.colorScheme.secondary),
+                                // la label è un punto
+                                label: '•',
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+                              child: NavigationDestination( // profilo
+                                selectedIcon: Icon(
+                                  Icons.person,
+                                  color: theme.colorScheme.primary,),
+                                icon: Icon(
+                                    Icons.person_outlined,
+                                    color: theme.colorScheme.secondary),
+                                label: '•',
+                              ),
+                            ),
+                          ],
+                          onDestinationSelected: (index) {
+                            setState(() {
+                              _selected_index = index;
+                            });
+                          },
+                        ),
+                      ),
+                      centralNavbarButtons(_differentColors, _selected_index),
+                    ],
                   ),
                 ),
-                centralNavbarButtons(_differentColors, _selected_index),
-              ],
-            ),
-          ),
-        );
-      }
+              );
+            }
     );
+  }
+}
+
+class AddNewElementToShoppingListModel extends ChangeNotifier {
+  bool selected = false;
+
+  void changeSelected() {
+    selected = !selected;
+    notifyListeners();
   }
 }

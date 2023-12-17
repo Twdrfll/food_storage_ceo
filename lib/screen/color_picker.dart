@@ -22,13 +22,14 @@ class ColorPickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorPickerModel = Provider.of<ColorPickerModel>(context, listen: false);
+    final triggerUpdateModel = Provider.of<TriggerUpdateModel>(context, listen: false);
     var newColor = colorPickerModel.userColor;
 
     return AlertDialog(
       title: const Text('Scegli un colore'),
       content: SingleChildScrollView(
         child: MaterialPicker(
-          pickerColor: hexToColor(colorPickerModel.userColor),
+          pickerColor: hexToColor(userColor),
           onColorChanged: (color) {
             newColor = colorToHex(color);
           },
@@ -38,7 +39,7 @@ class ColorPickerScreen extends StatelessWidget {
         ElevatedButton(
           child: const Text('OK'),
           onPressed: () async {
-            colorPickerModel.setUserColor(newColor);
+            await colorPickerModel.setUserColor(newColor);
             print('ColorPickerScreen: ${colorPickerModel.userColor}');
             Navigator.of(context).pop(); // Chiude il dialog
           },
@@ -52,6 +53,10 @@ class ColorPickerModel extends ChangeNotifier {
   String _userColor = LocalFridge().user.color;
 
   String get userColor => _userColor;
+
+  void setModelColor(String newColor) {
+    _userColor = newColor;
+  }
 
   Future<void> setUserColor(String newColor) async {
     _userColor = newColor;

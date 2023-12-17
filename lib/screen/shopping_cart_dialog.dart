@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import './dictionary_list.dart';
+import '../fridge_state.dart';
 import 'package:provider/provider.dart';
 
 class ShoppingCartRecap extends StatefulWidget {
-  const ShoppingCartRecap({Key? key}) : super(key: key);
+  final LocalFridge local_fridge;
+
+  const ShoppingCartRecap({Key? key, required this.local_fridge}) : super(key: key);
 
   @override
   _ShoppingCartRecapState createState() => _ShoppingCartRecapState();
@@ -12,12 +15,43 @@ class ShoppingCartRecap extends StatefulWidget {
 class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
 
   int _number_of_elements = 1;
+  // il primo valore è l'indice dell'elemento nell'array di elementi presenti nel dizionario, il secondo è la quantità scelta
+  Map<int, int> quantityForItem = {};
 
-  Map<int, int> quantityForItem = {}; // il primo valore è l'indice nell'array di elementi selezionati, il secondo è la quantità scelta
-
-  void setAllQuantitiesToOne() {
+  /*void setAllQuantitiesToOne() {
     for (var i = 0; i < _number_of_elements; i++) {
       quantityForItem.putIfAbsent(i, () => 1);
+    }
+  }*/
+
+  void setAllQuantitiesToOne(Map<int, LocalDictionaryElement> elements) {
+    for (var key in elements.keys) {
+      quantityForItem.putIfAbsent(key, () => 1);
+    }
+  }
+
+  Future<void> addElementToShoppingCart(LocalDictionaryElement element, int quantity) async {
+    String shoppingCartElementName = element.name;
+    String shoppingCartBarcode = element.barcode;
+    String shoppingCartElementDaysToExp = element.days_to_expiration;
+    int shoppingCartElementQuantity = quantity;
+    String shoppingCartElementColor = widget.local_fridge.user.color;
+    int shoppingCartUserID = int.parse(widget.local_fridge.user.id);
+    LocalShoppingCartElement shoppingCartElement = LocalShoppingCartElement(
+        shoppingCartElementName,
+        shoppingCartBarcode,
+        shoppingCartElementDaysToExp,
+        shoppingCartElementQuantity,
+        shoppingCartElementColor,
+        shoppingCartUserID
+    );
+    await widget.local_fridge.localShoppingCart.addElement(shoppingCartElement);
+  }
+
+  Future<void> addElementsToShoppingCart() async {
+    print(quantityForItem);
+    for (var key in quantityForItem.keys) {
+      await addElementToShoppingCart(widget.local_fridge.localDictionary.dictionary_elements[key], quantityForItem[key]!);
     }
   }
 
@@ -31,8 +65,9 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
           IconButton(
             onPressed: () {
               setState(() {
-                if (quantityForItem[element_index]! > 1) {
-                  quantityForItem[element_index] = actual_quantity - 1;
+                if (quantityForItem.values.elementAt(element_index) > 1) {
+                  int element_key = quantityForItem.keys.elementAt(element_index);
+                  quantityForItem[element_key] = actual_quantity - 1;
                 }
               });
             },
@@ -66,7 +101,8 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
           IconButton(
             onPressed: () {
               setState(() {
-                quantityForItem[element_index] = actual_quantity + 1;
+                int element_key = quantityForItem.keys.elementAt(element_index);
+                quantityForItem[element_key] = actual_quantity + 1;
               });
             },
             icon: Icon(
@@ -86,7 +122,7 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
         context, listen: false);
     if (dictionaryItemsModel.selectedElements.isNotEmpty) {
       _number_of_elements = dictionaryItemsModel.selectedElements.length;
-      setAllQuantitiesToOne();
+      setAllQuantitiesToOne(dictionaryItemsModel.selectedElements);
     }
     return Stack(
         children: [
@@ -108,7 +144,7 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
                     );
                   } else {
                     return Padding(
-                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
                       child: Container(
                         height: 72.0,
                         width: MediaQuery.of(context).size.width,
@@ -125,14 +161,14 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    dictionaryItemsModel.selectedElements[index].name,
+                                    dictionaryItemsModel.selectedElements.values.elementAt(index).name,
                                     style: TextStyle(
                                       fontSize: theme.textTheme.labelLarge!.fontSize,
                                       fontWeight: theme.textTheme.labelLarge!.fontWeight,
                                       color: Colors.black,
                                     ),
                                   ),
-                                  quantitySelection(quantityForItem[index]!, index, context),
+                                  quantitySelection(quantityForItem.values.elementAt(index), index, context),
                                 ],
                               ),
                             ),
@@ -162,7 +198,11 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
             left: 24.0,
             right: 24.0,
             child: ElevatedButton( // Logout e ritorno alla pagina di login
-              onPressed: () {},
+              onPressed: () async {
+                await addElementsToShoppingCart();
+                dictionaryItemsModel.removeAllSelectedElements();
+                Navigator.of(context).pop();
+              },
               style: ButtonStyle(
                 backgroundColor:
                 MaterialStateProperty.all<Color>(theme.colorScheme.onPrimary),

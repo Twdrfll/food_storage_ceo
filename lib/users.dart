@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:food_storage_ceo/fridge_state.dart';
+import 'package:food_storage_ceo/screen/color_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_connection.dart';
 import 'fridge_event.dart' as fridge_event;
@@ -93,7 +96,8 @@ class User {
       return false;
     } else {
       print("User found!");
-      this.setColor(await this.getColor());
+      String userColor = await this.getColor();
+      this.setColor(userColor);
       this.setFridgeID(results[0][1].toString());
       this.fridgeEvent.setFridgeID(this.fridgeID);
       this.id = await this.getUserId();
@@ -134,6 +138,15 @@ class User {
       print("User created!");
       return true;
     }
+  }
+
+  void dispose() {
+    this.fridgeEvent.stopCommunication();
+    this.removeLocalData();
+    this.color = "";
+    this.email = "";
+    this.password = "";
+    this.fridgeID = "";
   }
 
   Future<bool> deleteUser() async {
@@ -203,6 +216,7 @@ class User {
       await db.query(query);
       await db.close();
       this.setColor(newColor);
+      this.fridgeEvent.sendUpdate();
       return true;
     } catch (e) {
       print("Error while updating user color: " + e.toString());

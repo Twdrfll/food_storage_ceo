@@ -23,7 +23,11 @@ class _DictionaryItemsState extends State<DictionaryItems> {
 
   void setAllDictionaryItemsToUnselected() {
     for (var i = 0; i < widget.local_fridge.localDictionary.dictionary_elements.length; i++) {
-      selectedItems.putIfAbsent(i, () => false);
+      if (!selectedItems.containsKey(i)){
+        selectedItems.putIfAbsent(i, () => false);
+      } else {
+        selectedItems[i] = false;
+      }
     }
   }
 
@@ -47,74 +51,86 @@ class _DictionaryItemsState extends State<DictionaryItems> {
     }
   }
 
-  void selectedItemsChecker(List<LocalDictionaryElement> elements) {
-    print('selectedItemsChecker');
-    for (var element in elements) {
-      print(element.name);
+  void selectedItemsChecker(Map<int, LocalDictionaryElement> elements) {
+    if (elements.isEmpty) {
+      setAllDictionaryItemsToUnselected();
+    } else {
+      for (var i = 0; i < selectedItems.length; i++) {
+        if (elements.containsKey(i)) {
+          selectedItems[i] = true;
+        } else {
+          selectedItems[i] = false;
+        }
+      }
     }
   }
 
   Widget listElementBuilder(ThemeData theme, int index) {
-    final dictionaryItemsModel = Provider.of<DictionaryItemsModel>(context, listen: false);
     if (index == 0) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 130.0, bottom: 12.0, left: 12.0),
-        child: ListTile(
-          title: Text(
-            suggestionResult.values.elementAt(index).name,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: theme.textTheme.titleMedium!.fontSize,
-              fontWeight: theme.textTheme.titleLarge!.fontWeight,
+      return Consumer<DictionaryItemsModel>(
+      builder: (context, dictionaryItemsModel, child) {
+        selectedItemsChecker(dictionaryItemsModel._selectedElements);
+          return Padding(
+            padding: const EdgeInsets.only(top: 130.0, bottom: 12.0, left: 12.0),
+            child: ListTile(
+              title: Text(
+                suggestionResult.values.elementAt(index).name,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: theme.textTheme.titleMedium!.fontSize,
+                  fontWeight: theme.textTheme.titleLarge!.fontWeight,
+                ),
+              ),
+              subtitle: Text('Consumare entro ${widget.local_fridge.localDictionary.dictionary_elements[index].days_to_expiration} giorni dall\'apertura'),
+              trailing: Checkbox(
+                value: selectedItems.values.elementAt(suggestionResult.keys.elementAt(index)),
+                onChanged: (bool? value) {
+                  setState(() {
+                    selectedItems[suggestionResult.keys.elementAt(index)] = value!;
+                    if (value) {
+                      dictionaryItemsModel.addSelectedElement(suggestionResult.keys.elementAt(index), suggestionResult.values.elementAt(index));
+                    } else {
+                      dictionaryItemsModel.removeSelectedElement(suggestionResult.keys.elementAt(index));
+                    }
+                  });
+                },
+              ),
             ),
-          ),
-          subtitle: Text('Consumare entro ${widget.local_fridge.localDictionary.dictionary_elements[index].days_to_expiration} giorni dall\'apertura'),
-          trailing: Checkbox(
-            value: selectedItems.values.elementAt(suggestionResult.keys.elementAt(index)),
-            onChanged: (bool? value) {
-              setState(() {
-                selectedItems[suggestionResult.keys.elementAt(index)] = value!;
-                if (value) {
-                  dictionaryItemsModel.addSelectedElement(suggestionResult.values.elementAt(index));
-                } else {
-                  dictionaryItemsModel.removeSelectedElement(suggestionResult.values.elementAt(index));
-                }
-              });
-              print('elemento con $index ora è selezionato? ${selectedItems[index]}');
-              selectedItemsChecker(dictionaryItemsModel._selectedElements);
-            },
-          ),
-        ),
+          );
+        },
       );
     } else {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12.0, left: 12.0),
-        child: ListTile(
-          title: Text(
-            suggestionResult.values.elementAt(index).name,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: theme.textTheme.titleMedium!.fontSize,
-              fontWeight: theme.textTheme.titleLarge!.fontWeight,
+      return Consumer<DictionaryItemsModel>(
+        builder: (context, dictionaryItemsModel, child) {
+          selectedItemsChecker(dictionaryItemsModel._selectedElements);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0, left: 12.0),
+            child: ListTile(
+              title: Text(
+                suggestionResult.values.elementAt(index).name,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: theme.textTheme.titleMedium!.fontSize,
+                  fontWeight: theme.textTheme.titleLarge!.fontWeight,
+                ),
+              ),
+              subtitle: Text('Consumare entro ${widget.local_fridge.localDictionary.dictionary_elements[index].days_to_expiration} giorni dall\'apertura'),
+              trailing: Checkbox(
+                value: selectedItems.values.elementAt(suggestionResult.keys.elementAt(index)),
+                onChanged: (bool? value) {
+                  setState(() {
+                    selectedItems[suggestionResult.keys.elementAt(index)] = value!;
+                    if (value) {
+                      dictionaryItemsModel.addSelectedElement(suggestionResult.keys.elementAt(index), suggestionResult.values.elementAt(index));
+                    } else {
+                      dictionaryItemsModel.removeSelectedElement(suggestionResult.keys.elementAt(index));
+                    }
+                  });
+                },
+              ),
             ),
-          ),
-          subtitle: Text('Consumare entro ${widget.local_fridge.localDictionary.dictionary_elements[index].days_to_expiration} giorni dall\'apertura'),
-          trailing: Checkbox(
-            value: selectedItems.values.elementAt(suggestionResult.keys.elementAt(index)),
-            onChanged: (bool? value) {
-              setState(() {
-                selectedItems[suggestionResult.keys.elementAt(index)] = value!;
-                if (value) {
-                  dictionaryItemsModel.addSelectedElement(suggestionResult.values.elementAt(index));
-                } else {
-                  dictionaryItemsModel.removeSelectedElement(suggestionResult.values.elementAt(index));
-                }
-              });
-              print('elemento con $index ora è selezionato? ${selectedItems[index]}');
-              selectedItemsChecker(dictionaryItemsModel._selectedElements);
-            },
-          ),
-        ),
+          );
+        },
       );
     }
   }
@@ -200,16 +216,16 @@ class _DictionaryItemsState extends State<DictionaryItems> {
 
 class DictionaryItemsModel extends ChangeNotifier {
 
-  List<LocalDictionaryElement> _selectedElements = [];
-  List<LocalDictionaryElement> get selectedElements => _selectedElements;
+  Map<int, LocalDictionaryElement> _selectedElements = {};
+  Map<int, LocalDictionaryElement> get selectedElements => _selectedElements;
 
-  void addSelectedElement(LocalDictionaryElement element) {
-    _selectedElements.add(element);
+  void addSelectedElement(int index_in_dictionary, LocalDictionaryElement element) {
+    _selectedElements.putIfAbsent(index_in_dictionary, () => element);
     notifyListeners();
   }
 
-  void removeSelectedElement(LocalDictionaryElement element) {
-    _selectedElements.remove(element);
+  void removeSelectedElement(int index_in_dictionary) {
+    _selectedElements.remove(index_in_dictionary);
     notifyListeners();
   }
 

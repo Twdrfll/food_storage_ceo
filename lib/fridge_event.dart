@@ -5,17 +5,34 @@ condivisi con altri utenti. Sfrutta il pattern Singleton. */
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:async';
-import 'fridge_state.dart' as fs;
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'fridge_state.dart';
 
 class FridgeEvent {
+
+  /* LocalFridge _localFridge = LocalFridge();
+  LocalShoppingCart _localShoppingCart = LocalShoppingCart();
+  LocalDictionary _localDictionary = LocalDictionary(); */
+
   String _fridgeID = "";
   String _ipaddress = "";
   String _port = "";
   String _url = "";
   late IO.Socket socket;
   bool _update = false;
+  BuildContext? context;
 
   static final FridgeEvent _instance = FridgeEvent._internal();
+
+  /* Future<void> updateLocalData() async {
+    _localFridge.dispose();
+    _localShoppingCart.dispose();
+    _localDictionary.dispose();
+    await _localFridge.populateLocalFridge();
+    await _localShoppingCart.populateLocalShoppingCart();
+    await _localDictionary.populate_local_dictionary();
+  } */
 
   factory FridgeEvent() {
     return _instance;
@@ -57,10 +74,17 @@ class FridgeEvent {
       print("Disconnected");
     });
 
+    socket.on("fridgeEvent", (data) async {
+      getUpdate();
+      // await updateLocalData();
+      await Provider.of<TriggerUpdateModel>(context!, listen: false).updateOnDatabase();
+    });
+
   }
 
  bool getUpdate() {
-    return this._update;
+    print("getting update");
+    return true;
   }
 
   void setFridgeID(String ID) {

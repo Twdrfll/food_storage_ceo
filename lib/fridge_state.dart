@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'database_connection.dart';
 import 'fridge_event.dart' as fridge_event;
 import 'users.dart' as users;
@@ -108,8 +110,10 @@ class LocalFridge {
   users.User user = users.User();
   String fridge_ID = "";
   LocalDictionary localDictionary = new LocalDictionary();
+  LocalShoppingCart localShoppingCart = new LocalShoppingCart();
   List<LocalFridgeElement> fridge_elements = [];
   DatabaseConnection db = DatabaseConnection();
+  BuildContext? context;
 
   static final LocalFridge _instance = LocalFridge._internal();
 
@@ -122,12 +126,14 @@ class LocalFridge {
   }
 
   Future<void> setupFridge() async {
-    this.fridge_elements.clear();
+    //this.fridge_elements.clear();
     await this.db.connect();
     await this.localDictionary.setupConnection();
     await this.localDictionary.populate_local_dictionary();
     await this.populateLocalFridge();
-    this.registerFridgeEvent();
+    await this.localShoppingCart.setupShoppingCart();
+    Provider.of<TriggerUpdateModel>(context!, listen: false).setLocalFridge(this);
+    //this.registerFridgeEvent();
   }
 
   void registerFridgeEvent() {
@@ -340,7 +346,8 @@ class LocalShoppingCart {
   Prodotto.barcode,
   Prodotto.giorniValidità,
   ListaSpesa.quantità,
-  Utente.colore
+  Utente.colore,
+  Utente.id
   FROM ListaSpesa
   LEFT JOIN Prodotto ON Prodotto.id = ListaSpesa.idProdotto
   LEFT JOIN Utente ON Utente.id = ListaSpesa.idUtente
@@ -356,7 +363,8 @@ class LocalShoppingCart {
   Prodotto.barcode,
   Prodotto.giorniValidità,
   ListaSpesa.quantità,
-  Utente.colore
+  Utente.colore,
+  Utente.id
   FROM ListaSpesa
   RIGHT JOIN Prodotto ON Prodotto.id = ListaSpesa.idProdotto
   RIGHT JOIN Utente ON Utente.id = ListaSpesa.idUtente
@@ -393,12 +401,17 @@ class LocalShoppingCart {
     });
   }
 
+  void dispose() {
+    this.shopping_cart_elements.clear();
+  }
+
   Future<void> setupShoppingCart() async {
+    this.fridge_ID = this.user.fridgeID;
     await this.db.connect();
-    await this.localDictionary.setupConnection();
-    await this.localDictionary.populate_local_dictionary();
+    //await this.localDictionary.setupConnection();
+    //await this.localDictionary.populate_local_dictionary();
     await this.populateLocalShoppingCart();
-    this.registerFridgeEvent();
+    //this.registerFridgeEvent();
   }
 
   bool checkIfElementDataIsInDictionary(LocalShoppingCartElement element) {
@@ -437,10 +450,12 @@ class LocalShoppingCart {
           }
         }
       } else {
-        this.shopping_cart_elements.add(element);
         String new_element_id = this.returnIdOfExistingLocalDictionaryElement(element);
+        element.id = new_element_id;
+        this.shopping_cart_elements.add(element);
         var data = [new_element_id, this.user.id, element.quantity.toString()];
         String insert_element = DatabaseConnection.querySetupper(data, this.query_insert_element);
+        print(insert_element);
         try {
           await this.db.query(insert_element);
           this.user.fridgeEvent.sendUpdate();
@@ -456,8 +471,9 @@ class LocalShoppingCart {
   }
 
   Future<void> removeElement(LocalShoppingCartElement element) async {
-    var data = [element.id, this.user.id, element.quantity.toString()];
+    var data = [element.id, element.user_id.toString(), element.quantity.toString()];
     String remove_element = DatabaseConnection.querySetupper(data, this.query_remove_element);
+    print(remove_element);
     try {
       await this.db.query(remove_element);
       this.user.fridgeEvent.sendUpdate();
@@ -471,6 +487,7 @@ class LocalShoppingCart {
     this.shopping_cart_elements = [];
     var data = [this.fridge_ID, this.fridge_ID];
     String retrieve_elements = DatabaseConnection.querySetupper(data, this.retrieve_shopping_cart_elements);
+    print(retrieve_elements);
     var results = await this.db.query(retrieve_elements);
     for (var element in results) {
       LocalShoppingCartElement new_element_to_add = LocalShoppingCartElement.id(element[0].toString(),
@@ -478,7 +495,8 @@ class LocalShoppingCart {
           element[2].toString(),
           element[3].toString(),
           element[4],
-          element[5].toString());
+          element[5].toString(),
+          element[6]);
       this.shopping_cart_elements.add(new_element_to_add);
     }
   }
@@ -494,6 +512,7 @@ class LocalShoppingCart {
   Future<void> alter_element_quantity(LocalShoppingCartElement element, int new_quantity) async {
     var data = [new_quantity.toString(), element.id, this.user.id];
     String modify_element_quantity = DatabaseConnection.querySetupper(data, this.query_modify_element_quantity);
+    print(modify_element_quantity);
     try {
       await this.db.query(modify_element_quantity);
       this.user.fridgeEvent.sendUpdate();
@@ -548,6 +567,10 @@ class LocalDictionary {
     return _instance;
   }
 
+  void dispose() {
+    this.dictionary_elements.clear();
+  }
+
   Future<void> setupConnection() async {
     this.fridge_ID = this.user.fridgeID;
     await this.db.connect();
@@ -561,6 +584,7 @@ class LocalDictionary {
   Future<void> addElement(LocalDictionaryElement new_element) async {
     var data = [new_element.name, new_element.barcode, new_element.days_to_expiration, this.dictionary_ID];
     String insert_element = DatabaseConnection.querySetupper(data, this.query_insert_element);
+    print(insert_element);
     try {
       await this.db.query(insert_element);
       this.user.fridgeEvent.sendUpdate();
@@ -750,15 +774,18 @@ class LocalShoppingCartElement extends LocalDictionaryElement {
 
   int quantity = 0;
   String color = "";
+  int user_id = 0;
 
-  LocalShoppingCartElement(String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_color) : super(new_name, new_barcode, new_days_to_expiration) {
+  LocalShoppingCartElement(String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_color, int new_user_id) : super(new_name, new_barcode, new_days_to_expiration) {
     this.quantity = new_quantity;
     this.color = new_color;
+    this.user_id = new_user_id;
   }
 
-  LocalShoppingCartElement.id(String new_id, String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_color) : super.id(new_id, new_name, new_barcode, new_days_to_expiration) {
+  LocalShoppingCartElement.id(String new_id, String new_name, String new_barcode, String new_days_to_expiration, int new_quantity, String new_color, int new_user_id) : super.id(new_id, new_name, new_barcode, new_days_to_expiration) {
     this.quantity = new_quantity;
     this.color = new_color;
+    this.user_id = new_user_id;
   }
 
   void alterQuantity(int new_quantity) {
@@ -768,5 +795,29 @@ class LocalShoppingCartElement extends LocalDictionaryElement {
   void alterColor(String new_color) {
     this.color = new_color;
   }
+
+}
+
+class TriggerUpdateModel extends ChangeNotifier {
+
+  late LocalFridge localFridge;
+
+  void setLocalFridge(LocalFridge localFridge) {
+    this.localFridge = localFridge;
+  }
+
+  Future<void> updateOnDatabase() async {
+    print("updating local data");
+    print("actual local data: ${this.localFridge.fridge_elements.length}");
+    // cancello tutti gli elementi del frigo, del dizionario e del carrello
+    this.localFridge.dispose();
+    this.localFridge.localShoppingCart.dispose();
+    this.localFridge.localDictionary.dispose();
+    print("deleted local data: ${this.localFridge.fridge_elements.length}");
+    // ri-popolo il frigo, il dizionario e il carrello
+    await this.localFridge.setupFridge();
+    print("updated local data: ${this.localFridge.fridge_elements.length}");
+    notifyListeners();
+    }
 
 }

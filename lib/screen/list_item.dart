@@ -24,6 +24,7 @@ class _FridgeItemsState extends State<FridgeItems> {
   @override
   void initState() {
     super.initState();
+
     widget.local_fridge.dispose();
     loadFridgeData();
   }
@@ -43,6 +44,7 @@ class _FridgeItemsState extends State<FridgeItems> {
 
   Future<void> loadFridgeData() async {
     await widget.local_fridge.setupFridge();
+    print('FridgeItems: ${widget.local_fridge.fridge_elements}');
     setState(() {
       local_fridge_elements = widget.local_fridge.fridge_elements;
     });
@@ -131,6 +133,7 @@ class _FridgeItemsState extends State<FridgeItems> {
 
   @override
   Widget build(BuildContext context) {
+
     ThemeData theme = Theme.of(context);
     local_fridge_elements = widget.local_fridge.fridge_elements;
     return Consumer<SortModel>(
