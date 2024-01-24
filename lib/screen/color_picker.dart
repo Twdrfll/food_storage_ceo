@@ -26,9 +26,24 @@ class ColorPickerScreen extends StatelessWidget {
     var newColor = colorPickerModel.userColor;
 
     return AlertDialog(
-      title: const Text('Scegli un colore'),
+      backgroundColor: Colors.white,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Scegli un colore',
+            style: TextStyle(
+              fontSize: 24.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.color_lens),
+          ),
+        ],
+      ),
       content: SingleChildScrollView(
-        child: MaterialPicker(
+        child: BlockPicker(
           pickerColor: hexToColor(userColor),
           onColorChanged: (color) {
             newColor = colorToHex(color);

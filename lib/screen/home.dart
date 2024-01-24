@@ -24,6 +24,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   int _selected_index = 0;
+  int _navbar_index = 0;
   int _actual_sort_order_fridge = -1;
   bool _actual_sort_order_fridge_init = false;
   late LocalFridge local_fridge;
@@ -268,7 +269,7 @@ class _HomeState extends State<Home> {
                               context: context,
                               builder: (BuildContext context) {
                                 return Container(
-                                  height: MediaQuery.of(context).size.height * 0.7,
+                                  height: MediaQuery.of(context).size.height * 0.85,
                                   child: FridgeCalendar(localFridgeElements: local_fridge.fridge_elements,),
                                 );
                               },
@@ -313,7 +314,7 @@ class _HomeState extends State<Home> {
                             );
                           },
                           child: Icon(
-                            Icons.filter_list_outlined,
+                            Icons.sort,
                             color: Colors.black,
                             size: 30.0,
                           ),
@@ -353,9 +354,80 @@ class _HomeState extends State<Home> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            print('Sort');
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                int selectedSortIndex = 0;
+                                return AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: Center(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                              'Ordinamento',
+                                              style: TextStyle(
+                                                fontSize: theme.textTheme.titleLarge!.fontSize,
+                                                fontWeight: theme.textTheme.titleLarge!.fontWeight,
+                                              )
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 8.0),
+                                            child: Icon(Icons.edit),
+                                          ),
+                                        ],
+                                      )
+                                  ),
+                                  content: Container(
+                                    height: 150,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text("Non funzionante",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("Alfabetico A-Z"),
+                                            Radio(
+                                              value: 0,
+                                              groupValue: selectedSortIndex,
+                                              onChanged: (value) {
+                                                selectedSortIndex = value as int;
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("Alfabetico Z-A"),
+                                            Radio(
+                                              value: 1,
+                                              groupValue: selectedSortIndex,
+                                              onChanged: (value) {
+                                                  selectedSortIndex = value as int;
+                                                  Navigator.of(context).pop();
+                                                ;
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                           child: Icon(
-                            Icons.filter_list_outlined,
+                            Icons.sort,
                             color: Colors.black,
                             size: 30.0,
                           ),
@@ -437,63 +509,79 @@ class _HomeState extends State<Home> {
                         ),
                         child: NavigationBar(
                           surfaceTintColor: Colors.white,
-                          labelBehavior: NavigationDestinationLabelBehavior
-                              .onlyShowSelected,
-                          selectedIndex: _selected_index,
+                          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                          selectedIndex: _navbar_index,
                           destinations: [
                             Padding(
-                              padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+                              padding: const EdgeInsets.only(left: 10.0),
                               child: NavigationDestination( // dispensa
+                                tooltip: 'Frigo',
                                 selectedIcon: Icon(
                                   Icons.home_filled,
                                   color: theme.colorScheme.primary,),
                                 icon: Icon(
                                   Icons.home_outlined,
+                                  semanticLabel: 'Frigo',
                                   color: theme.colorScheme.secondary,),
-                                label: '•',
+                                label: 'Frigo',
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(right: 50.0),
+                              padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                               child: NavigationDestination( // spesa
+                                tooltip: 'Spesa',
                                 selectedIcon: Icon(
                                   Icons.shopping_cart,
+                                  semanticLabel: 'Spesa',
                                   color: theme.colorScheme.primary,),
                                 icon: Icon(
                                   Icons.shopping_cart_outlined,
                                   color: theme.colorScheme.secondary,),
-                                label: '•',
+                                label: 'Spesa',
                               ),
                             ),
+                            SizedBox(
+                              width: 0.0,
+                            ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 50.0),
+                              padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                               child: NavigationDestination( // dizionario
+                                tooltip: 'Dizionario',
                                 selectedIcon: Icon(
                                     Icons.menu_book,
+                                    semanticLabel: 'Dizionario',
                                     color: theme.colorScheme.primary),
                                 icon: Icon(
                                     Icons.menu_book_outlined,
                                     color: theme.colorScheme.secondary),
-                                // la label è un punto
-                                label: '•',
+                                label: 'Dizionario',
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+                              padding: const EdgeInsets.only(right: 10.0),
                               child: NavigationDestination( // profilo
+                                tooltip: 'Profilo',
                                 selectedIcon: Icon(
                                   Icons.person,
+                                  semanticLabel: 'Profilo',
                                   color: theme.colorScheme.primary,),
                                 icon: Icon(
                                     Icons.person_outlined,
                                     color: theme.colorScheme.secondary),
-                                label: '•',
+                                label: 'Profilo',
                               ),
                             ),
                           ],
                           onDestinationSelected: (index) {
                             setState(() {
-                              _selected_index = index;
+                              _navbar_index = index;
+                              print('Navbar index: $_navbar_index');
+                              if (index < 2) {
+                                _selected_index = index;
+                              } else {
+                                _selected_index = index - 1;
+                              }
+                              print('Selected index: $_selected_index');
                             });
                           },
                         ),

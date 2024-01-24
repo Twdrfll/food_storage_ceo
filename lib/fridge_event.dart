@@ -19,6 +19,7 @@ class FridgeEvent {
   String _ipaddress = "";
   String _port = "";
   String _url = "";
+  bool processing_update = false; // credo ci sia un bug per cui l'evento di aggiornamento viene gestito molteplici volte, gestisco l'esecuzione solo se questo flag è false
   late IO.Socket socket;
   bool _update = false;
   BuildContext? context;
@@ -75,15 +76,20 @@ class FridgeEvent {
     });
 
     socket.on("fridgeEvent", (data) async {
-      getUpdate();
-      // await updateLocalData();
-      await Provider.of<TriggerUpdateModel>(context!, listen: false).updateOnDatabase();
+      getUpdate(processing_update);
+      if (!processing_update) {
+        processing_update = true;
+        print("fridgeEvent received");
+        // await updateLocalData();
+        await Provider.of<TriggerUpdateModel>(context!, listen: false).updateOnDatabase();
+        processing_update = false;
+      }
     });
 
   }
 
- bool getUpdate() {
-    print("getting update");
+ bool getUpdate(bool processing_update) {
+    print("getting update while processing_update is $processing_update");
     return true;
   }
 

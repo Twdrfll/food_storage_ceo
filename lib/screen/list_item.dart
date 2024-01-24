@@ -131,6 +131,27 @@ class _FridgeItemsState extends State<FridgeItems> {
     }
   }
 
+  expiracyText(DateTime expiracy_date) {
+    DateTime now = DateTime.now();
+    if (expiracy_date.isBefore(now)) {
+      return Text('Scaduto',
+          style: TextStyle(
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    } else if (expiracy_date.difference(now).inDays <= 5) {
+      return Text('Consumalo entro ' + expiracy_date.difference(now).inDays.toString() + ' giorni!',
+        style: TextStyle(
+          color: Colors.orange,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    } else {
+      return Text('Scadenza: ' + expiracy_date.toString().substring(0, 10));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -230,9 +251,7 @@ class _FridgeItemsState extends State<FridgeItems> {
                             Padding(
                               padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
                               // taglio la stringa altrimenti per qualche motivo restano informazioni sull'orario dopo l'aggiunta di un elemento
-                              child: Text('Scadenza: ' +
-                                  local_fridge_elements[index].expiration_date
-                                      .substring(0, 10)),
+                              child: expiracyText(DateTime.parse(local_fridge_elements[index].expiration_date)),
                             ),
                           ],
                         ),

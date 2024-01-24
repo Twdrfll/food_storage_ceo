@@ -65,6 +65,11 @@ class _DictionaryItemsState extends State<DictionaryItems> {
     }
   }
 
+  void resetElements() {
+    setSuggestedListAsAllDictionaryElements();
+    setAllDictionaryItemsToUnselected();
+  }
+
   Widget listElementBuilder(ThemeData theme, int index) {
     if (index == 0) {
       return Consumer<DictionaryItemsModel>(
@@ -139,8 +144,7 @@ class _DictionaryItemsState extends State<DictionaryItems> {
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
     if (selectedItems.isEmpty) {
-      setAllDictionaryItemsToUnselected();
-      setSuggestedListAsAllDictionaryElements();
+      resetElements();
     }
     return Stack(
         children: <Widget> [

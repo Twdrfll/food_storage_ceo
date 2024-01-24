@@ -199,6 +199,28 @@ class _FridgeChangeWidgetState extends State<FridgeChangeWidget> {
     local_fridge = LocalFridge();
   }
 
+  Future<void> transferProductsToNewFridge() async {
+    List<LocalFridgeElement> elements_to_add = [];
+    // copio gli elementi del vecchio frigo in una lista temporanea
+    for (int i = 0; i < local_fridge.fridge_elements.length; i++) {
+      if (local_fridge.fridge_elements[i].user_id == int.parse(local_fridge.user.id)) {
+        elements_to_add.add(local_fridge.fridge_elements[i]);
+      }
+    }
+    for (int i = 0; i < elements_to_add.length; i++) {
+      print(elements_to_add[i].name);
+    }
+    // rimuovo gli elementi
+    for (int i = 0; i < elements_to_add.length; i++) {
+      await local_fridge.removeElement(elements_to_add[i], send_update_to_server: false);
+    }
+    /* aggiungo gli elementi al nuovo frigo. Ora verranno aggiunti e sdoppiati
+    nella tabella dizionario, se non sono già presenti */
+    for (int i = 0; i < elements_to_add.length; i++) {
+      await local_fridge.addElement(elements_to_add[i], send_update_to_server: false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -256,9 +278,15 @@ class _FridgeChangeWidgetState extends State<FridgeChangeWidget> {
                                 child: Text('Conferma'),
                                 onPressed: () async {
                                   bool result = await local_fridge.user.changeUserFridge(textController.text);
-                                  local_fridge.user.fridgeEvent.sendUpdate();
+                                  List<LocalFridgeElement> backup_fridge = local_fridge.fridge_elements;
                                   local_fridge.fridge_ID = textController.text;
-                                  local_fridge.setupFridge();
+                                  await local_fridge.setupFridge();
+                                  for (int i = 0; i < local_fridge.fridge_elements.length; i++) {
+                                    print(local_fridge.fridge_elements[i].name);
+                                  }
+                                  await transferProductsToNewFridge();
+                                  local_fridge.user.fridgeEvent.sendUpdate();
+                                  Provider.of<TriggerUpdateModel>(context, listen: false).updateOnDatabase();
                                   local_fridge.user.saveLocalData();
                                   if (!result) {
                                     widget.showErrorFridge(context);

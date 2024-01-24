@@ -89,7 +89,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
     }
   }
 
-  void _showError(BuildContext context) {
+  void _showError(BuildContext context) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Errore durante il login/signup.'),
@@ -97,6 +97,17 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
+    await local_fridge.user.removeLocalData();
+    local_fridge.user.dispose();
+    /* frigo locale resettato */
+    local_fridge.dispose();
+    local_fridge.fridge_ID = "";
+    /* shopping cart locale resettato */
+    local_fridge.localShoppingCart.dispose();
+    local_fridge.localShoppingCart.fridge_ID = "";
+    /* dizionario locale resettato */
+    local_fridge.localDictionary.dispose();
+    local_fridge.localDictionary.fridge_ID = "";
   }
 
   void _showCompletionError(BuildContext context) {

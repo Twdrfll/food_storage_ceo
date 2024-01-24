@@ -22,6 +22,7 @@ class _SortState extends State<Sort> {
     selectedSortIndex = widget.actualSortOrder;
     ThemeData theme = Theme.of(context);
     return AlertDialog(
+      backgroundColor: Colors.white,
       title: Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -41,10 +42,15 @@ class _SortState extends State<Sort> {
           )
       ),
       content: Container(
-        height: 100,
+        height: 250,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
+            Text("Parzialmente funzionante",
+              style: TextStyle(
+                fontWeight: FontWeight.normal,
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -82,6 +88,42 @@ class _SortState extends State<Sort> {
                 ),
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Data di scadenza crescente"),
+                Radio(
+                  value: 2,
+                  groupValue: selectedSortIndex,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedSortIndex = value as int;
+                      widget.changeSortOrder(selectedSortIndex);
+                      sortModel.reorder(selectedSortIndex);
+                      Navigator.of(context).pop();
+                    });
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Data di scadenza decrescente"),
+                Radio(
+                  value: 3,
+                  groupValue: selectedSortIndex,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedSortIndex = value as int;
+                      widget.changeSortOrder(selectedSortIndex);
+                      sortModel.reorder(selectedSortIndex);
+                      Navigator.of(context).pop();
+                    });
+                  },
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -94,9 +136,14 @@ class SortModel extends ChangeNotifier {
     if (sortOrder == 0) {
       LocalFridge().reorder_elements_alphabetically_a_to_z();
       notifyListeners();
-    } else {
+    } else if (sortOrder == 1) {
       LocalFridge().reorder_elements_alphabetically_z_to_a();
       notifyListeners();
-    }
-  }
+    } else if (sortOrder == 2) {
+      LocalFridge().reorder_elements_by_expiration_date_ascending();
+      notifyListeners();
+    } else if (sortOrder == 3) {
+      LocalFridge().reorder_elements_by_expiration_date_descending();
+      notifyListeners();
+  }}
 }

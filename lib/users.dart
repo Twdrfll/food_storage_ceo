@@ -90,7 +90,6 @@ class User {
     await db.connect();
     String query = DatabaseConnection.querySetupper(data, query_validate_login);
     List results = await db.query(query);
-    await db.close();
     if (results.isEmpty) {
       print("No corresponding user found");
       return false;
@@ -164,7 +163,6 @@ class User {
         print("Error while deleting user, probably because it still as products into its fridge: ");
         print(e);
       }
-      await db.close();
       return true;
     } else {
       print("User not found, aborting delete...");
@@ -186,7 +184,6 @@ class User {
     await db.connect();
     String query = DatabaseConnection.querySetupper([this.email], query_get_color);
     List results = await db.query(query);
-    await db.close();
     this.setColor(results[0][0].toString());
     return Future.value(this.color);
   }
@@ -197,13 +194,17 @@ class User {
       await db.connect();
       String query = DatabaseConnection.querySetupper([newFridge, this.email], query_switch_fridge);
       await db.query(query);
-      await db.close();
+      this.fridgeEvent.stopCommunication();
       this.setFridgeID(newFridge);
+      fridgeEvent.communicate();
+      this.fridgeEvent.sendUpdate();
       this.fridgeEvent.setFridgeID(this.fridgeID);
       await this.fridgeEvent.communicate();
+      // this.fridgeEvent.sendUpdate();
       return true;
     } catch (e) {
-      print("Error while changing user fridge: the new fridge probably doesn't exist. Aborting...");
+      print(
+          "Error while changing user fridge: the new fridge probably doesn't exist. Aborting...");
       return false;
     }
   }
@@ -214,7 +215,6 @@ class User {
       await db.connect();
       String query = DatabaseConnection.querySetupper([newColor, this.email], query_update_color);
       await db.query(query);
-      await db.close();
       this.setColor(newColor);
       this.fridgeEvent.sendUpdate();
       return true;

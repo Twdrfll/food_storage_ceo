@@ -139,6 +139,24 @@ class _ShoppingCartWindowState extends State<ShoppingCartWindow> {
     return counter;
   }
 
+  Widget listOrSizedBox() {
+    if (widget.local_fridge.localShoppingCart.shopping_cart_elements.length > 0) {
+      return ListView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: widget.local_fridge.localShoppingCart.shopping_cart_elements.length,
+        itemBuilder: (BuildContext context, int index) {
+          return ListElement(index, context);
+        },
+      );
+    } else {
+      return SizedBox(
+        height: 4000.0,
+        width: 4000.0,
+      );
+    }
+  }
+
   Future<void> removeSelectedElementsFromShoppingList() async {
     List<LocalShoppingCartElement> elements_to_remove = [];
     for (var key in selectedItems.keys) {
@@ -284,14 +302,15 @@ class _ShoppingCartWindowState extends State<ShoppingCartWindow> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            ListView.builder(
+                            listOrSizedBox(),
+                            /*ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: widget.local_fridge.localShoppingCart.shopping_cart_elements.length,
                               itemBuilder: (BuildContext context, int index) {
                                 return ListElement(index, context);
                               },
-                            ),
+                            ), */
                           ],
                         )
                     ),
