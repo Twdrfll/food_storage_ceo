@@ -80,7 +80,7 @@ class _LoginAndSignupState extends State<LoginAndSignup> {
       if (await local_fridge.user.signup()) {
         await local_fridge.createFridgeAndDictionary();
         await local_fridge.user.saveLocalData();
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/first_color_picker');
       } else {
         _showError(context);
       }

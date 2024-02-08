@@ -103,7 +103,7 @@ class Settings extends StatelessWidget {
       FridgeChangeWidgetContainer( showErrorFridge: (BuildContext context) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore durante il cambio di dispensa'),
+            content: Text('Errore durante il cambio di frigo'),
             duration: const Duration(seconds: 2),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
@@ -230,7 +230,7 @@ class _FridgeChangeWidgetState extends State<FridgeChangeWidget> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-            "La tua attuale dispensa è: " + local_fridge.user.fridgeID,
+            "Il tuo attuale frigo è: " + local_fridge.user.fridgeID,
         ),
         Padding(
           padding: const EdgeInsets.only(top: 8.0),
@@ -314,7 +314,7 @@ class _FridgeChangeWidgetState extends State<FridgeChangeWidget> {
                   ),
                 ),
                 child: Text(
-                    "Cambia dispensa",
+                    "Cambia frigo",
                     style: TextStyle(
                       fontSize: theme.textTheme.labelLarge!.fontSize,
                       fontWeight: theme.textTheme.labelLarge!.fontWeight,
@@ -343,7 +343,7 @@ class FridgeChangeWidgetContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.0),
       ),
       title: Text(
-        'Dispensa',
+        'Frigo',
         style: TextStyle(
           fontSize: Theme.of(context).textTheme.titleMedium!.fontSize,
           fontWeight: Theme.of(context).textTheme.titleMedium!.fontWeight,
@@ -387,6 +387,12 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
         ),
       ),
       children: [
+        Text("placeholder",
+        style: TextStyle(
+            fontSize: theme.textTheme.labelSmall!.fontSize,
+            fontWeight: theme.textTheme.labelSmall!.fontWeight,
+          ),
+        ),
         // tre radio buttons, uno per ogni opzione di notifica
         ListTile(
           title: const Text('Consenti'),
@@ -458,6 +464,12 @@ class _CameraSettingsWidgetState extends State<CameraSettingsWidget> {
         ),
       ),
       children: [
+        Text("placeholder",
+          style: TextStyle(
+            fontSize: theme.textTheme.labelSmall!.fontSize,
+            fontWeight: theme.textTheme.labelSmall!.fontWeight,
+          ),
+        ),
         // tre radio buttons, uno per ogni opzione di notifica
         ListTile(
           title: const Text('Consenti l\'uso'),

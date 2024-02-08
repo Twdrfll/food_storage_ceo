@@ -168,10 +168,9 @@ class _FridgeItemsState extends State<FridgeItems> {
               itemBuilder: (context, index) {
                 return Dismissible(
                   behavior: HitTestBehavior.translucent,
-                  key: Key(local_fridge_elements[index].id.toString()),
+                  key: Key(local_fridge_elements[index].name + local_fridge_elements[index].expiration_date + local_fridge_elements[index].color),
                   onDismissed: (direction) async {
-                    await widget.local_fridge.removeElement(widget.local_fridge.fridge_elements[index]);
-                    setState(() {});
+                    widget.local_fridge.removeElement(widget.local_fridge.fridge_elements[index]).then((value) => setState(() {}));
                   },
                   background: Padding(
                     padding: const EdgeInsets.all(8.0),

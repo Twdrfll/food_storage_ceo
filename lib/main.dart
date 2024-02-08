@@ -8,6 +8,7 @@ import 'screen/color_picker.dart';
 import 'screen/sort.dart';
 import 'fridge_state.dart';
 import 'screen/add_element.dart';
+import 'screen/first_color_picker.dart';
 import 'screen/scan_barcode.dart';
 import 'screen/dictionary_list.dart';
 import './fridge_event.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
             routes: {
               '/home': (context) => Home(),
               '/login': (context) => LoginAndSignup(),
+              '/first_color_picker': (context) => FirstColorPicker(),
               '/add_element': (context) => AddElement(),
               '/scan_barcode': (context) => ScanBarcode(),
             },

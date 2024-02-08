@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import './app_settings.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../fridge_state.dart';
-import '../fridge_state.dart';
 
 class ColorPickerScreen extends StatelessWidget {
   final String userColor;

@@ -182,14 +182,17 @@ class _ShoppingCartRecapState extends State<ShoppingCartRecap> {
           ),
           Padding(
             padding: const EdgeInsets.only(left:12.0, right: 12.0, top: 24.0, bottom: 24.0),
-            child: Text(
-              'Conferma la tua lista della spesa',
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: TextStyle(
-                fontSize: theme.textTheme.titleLarge!.fontSize,
-                fontWeight: theme.textTheme.titleLarge!.fontWeight,
-                color: theme.colorScheme.onPrimary,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+              child: Text(
+                'Conferma il tuo carrello della spesa',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: TextStyle(
+                  fontSize: theme.textTheme.titleLarge!.fontSize,
+                  fontWeight: theme.textTheme.titleLarge!.fontWeight,
+                  color: theme.colorScheme.onPrimary,
+                ),
               ),
             ),
           ),
