@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_storage_ceo/screen/app_settings.dart';
+import 'screen/setup_demo.dart';
 import 'package:food_storage_ceo/screen/sort.dart';
 import 'screen/login_signup.dart';
 import 'screen/home.dart';
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Flutter Demo',
-            home: LoginAndSignup(),
+            home: InitialSetup(),
             theme: mainTheme,
             routes: {
               '/home': (context) => Home(),
