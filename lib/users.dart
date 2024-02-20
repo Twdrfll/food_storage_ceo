@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'dart:math';
-// import 'package:shared_preferences/shared_preferences.dart'; TOGLIERE COMMENTI QUANDO SI SVILUPPERà IN ANDROID
+import 'package:food_storage_ceo/fridge_state.dart';
+import 'package:food_storage_ceo/screen/color_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'database_connection.dart';
 import 'fridge_event.dart' as fridge_event;
 
@@ -56,8 +60,7 @@ class User {
     this.fridgeID = fridgeID;
   }
 
-  /* TOGLIERE I COMMENTI QUANDO SI SVILUPPERà IN ANDROID
-  void retrieveSavedData() async {
+  Future<void> retrieveSavedData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     this.email = prefs.getString("email") ?? "";
     this.password = prefs.getString("password") ?? "";
@@ -65,7 +68,7 @@ class User {
     this.fridgeID = prefs.getString("fridgeID") ?? "";
   }
 
-  void saveLocalData() async {
+  Future<void> saveLocalData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("email", this.email);
     prefs.setString("password", this.password);
@@ -73,13 +76,13 @@ class User {
     prefs.setString("fridgeID", this.fridgeID);
   }
 
-  void removeLocalData() async {
+  Future<void> removeLocalData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove("email");
     prefs.remove("password");
     prefs.remove("color");
     prefs.remove("fridgeID");
-  } */
+  }
 
   Future<bool> login() async {
     var data = [this.email, this.password];
@@ -87,13 +90,13 @@ class User {
     await db.connect();
     String query = DatabaseConnection.querySetupper(data, query_validate_login);
     List results = await db.query(query);
-    await db.close();
     if (results.isEmpty) {
       print("No corresponding user found");
       return false;
     } else {
       print("User found!");
-      this.setColor(await this.getColor());
+      String userColor = await this.getColor();
+      this.setColor(userColor);
       this.setFridgeID(results[0][1].toString());
       this.fridgeEvent.setFridgeID(this.fridgeID);
       this.id = await this.getUserId();
@@ -136,6 +139,15 @@ class User {
     }
   }
 
+  void dispose() {
+    this.fridgeEvent.stopCommunication();
+    this.removeLocalData();
+    this.color = "";
+    this.email = "";
+    this.password = "";
+    this.fridgeID = "";
+  }
+
   Future<bool> deleteUser() async {
     var data = [this.email];
     DatabaseConnection db = DatabaseConnection();
@@ -151,7 +163,6 @@ class User {
         print("Error while deleting user, probably because it still as products into its fridge: ");
         print(e);
       }
-      await db.close();
       return true;
     } else {
       print("User not found, aborting delete...");
@@ -173,7 +184,6 @@ class User {
     await db.connect();
     String query = DatabaseConnection.querySetupper([this.email], query_get_color);
     List results = await db.query(query);
-    await db.close();
     this.setColor(results[0][0].toString());
     return Future.value(this.color);
   }
@@ -184,16 +194,35 @@ class User {
       await db.connect();
       String query = DatabaseConnection.querySetupper([newFridge, this.email], query_switch_fridge);
       await db.query(query);
-      await db.close();
+      this.fridgeEvent.stopCommunication();
       this.setFridgeID(newFridge);
+      fridgeEvent.communicate();
+      this.fridgeEvent.sendUpdate();
       this.fridgeEvent.setFridgeID(this.fridgeID);
       await this.fridgeEvent.communicate();
+      // this.fridgeEvent.sendUpdate();
       return true;
     } catch (e) {
-      print("Error while changing user fridge: the new fridge probably doesn't exist. Aborting...");
+      print(
+          "Error while changing user fridge: the new fridge probably doesn't exist. Aborting...");
       return false;
     }
-}
+  }
+
+  Future<bool> updateUserColor(String newColor) async {
+    try {
+      DatabaseConnection db = DatabaseConnection();
+      await db.connect();
+      String query = DatabaseConnection.querySetupper([newColor, this.email], query_update_color);
+      await db.query(query);
+      this.setColor(newColor);
+      this.fridgeEvent.sendUpdate();
+      return true;
+    } catch (e) {
+      print("Error while updating user color: " + e.toString());
+      return false;
+    }
+  }
 
   static String generateRandomColorHex() {
     final Random random = Random();

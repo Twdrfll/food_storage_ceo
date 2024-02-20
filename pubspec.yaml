@@ -39,6 +39,12 @@ dependencies:
   socket_io_client: ^2.0.3+1
   dart_mysql: ^0.0.1
   shared_preferences: ^2.0.8
+  google_fonts: ^6.1.0
+  persistent_bottom_nav_bar_v2: any
+  flutter_colorpicker: ^1.0.3
+  provider: ^6.1.1
+  table_calendar: ^3.0.9
+  fast_barcode_scanner: ^1.1.4
 
 dev_dependencies:
   flutter_test:

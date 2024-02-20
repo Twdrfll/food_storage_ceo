@@ -3,11 +3,14 @@ import 'dart:async';
 
 class DatabaseConnection {
 
-  String hostname = 'localhost';
+  // String hostname = '10.0.2.2';
+  String hostname = '10.0.2.2';
   int port = 8889;
+  // int port = 8889;
   String user = 'root';
   String password = 'root';
   String database = 'ProvaTheFridge';
+  bool connected = false;
   var settings;
   var connection;
 
@@ -21,16 +24,47 @@ class DatabaseConnection {
       password: this.password,
       db: this.database,
     );
-    this.connection = dart_mysql.MySqlConnection.connect(this.settings);
+    // this.connection = dart_mysql.MySqlConnection.connect(this.settings);
+    connect().then((value) {
+      if (value) {
+        connected = true;
+        print('Connected to the database');
+      } else {
+        connected = false;
+        print('Error while trying to connect to the database');
+      }
+    });
   }
-
 
   factory DatabaseConnection() {
     return _instance;
   }
 
-  Future<void> connect() async {
-    this.connection = await dart_mysql.MySqlConnection.connect(this.settings);
+  void setHostname(String hostname) {
+    this.hostname = hostname;
+  }
+
+  void setPort(int port) {
+    this.port = port;
+  }
+
+  Future<bool> connect() async {
+    // this.connection = await dart_mysql.MySqlConnection.connect(this.settings);
+    try {
+      this.settings = dart_mysql.ConnectionSettings(
+        host: this.hostname,
+        port: this.port,
+        user: this.user,
+        password: this.password,
+        db: this.database,
+      );
+      print('connecting to: ' + this.hostname);
+      print('at port: ' + this.port.toString());
+      this.connection = await dart_mysql.MySqlConnection.connect(this.settings);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<List> query(String sql) async {
