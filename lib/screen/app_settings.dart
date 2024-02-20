@@ -112,8 +112,31 @@ class Settings extends StatelessWidget {
       }),
       NotificationSettingsWidget(),
       CameraSettingsWidget(),
+      Align(
+        alignment: Alignment.center,
+        child: ElevatedButton( // Logout e ritorno alla pagina di login
+          onPressed: () {},
+          style: ButtonStyle(
+            backgroundColor:
+            MaterialStateProperty.all<Color>(theme.colorScheme.tertiary),
+            minimumSize: MaterialStateProperty.all<Size>(Size(180.0, 64.0)),
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(36.0))),
+            ),
+          ),
+          child: Text(
+            "Rivedi tutorial",
+            style: TextStyle(
+              fontSize: theme.textTheme.labelLarge!.fontSize,
+              fontWeight: theme.textTheme.labelLarge!.fontWeight,
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ),
       Padding( // Bottone logout
-        padding: const EdgeInsets.only(bottom: 120.0),
+        padding: const EdgeInsets.only(top: 12.0, bottom: 120.0),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ElevatedButton( // Logout e ritorno alla pagina di login
